@@ -42,6 +42,8 @@ class SimpleSmoothScroll {
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         will-change: transform;
         backface-visibility: hidden;
+        cursor: pointer;
+        pointer-events: auto;
       }
       
       .service-card:hover, .portfolio-item:hover, .blender-project:hover {
@@ -136,8 +138,30 @@ class SimpleSmoothScroll {
   setupSmoothNavigation() {
     // Enhanced navigation with smooth scrolling
     document.addEventListener('click', (e) => {
+      // First check if we're clicking on service or portfolio cards
+      if (e.target.closest('.service-card') || e.target.closest('.portfolio-item')) {
+        // Let the onclick handlers do their work, don't interfere
+        return;
+      }
+      
       const link = e.target.closest('a[href^="#"]');
       if (!link) return;
+      
+      // Don't handle clicks on gig buttons or other non-navigation links
+      if (link.classList.contains('gig-btn') || 
+          link.classList.contains('profile-btn') ||
+          link.getAttribute('href') === '#') {
+        e.preventDefault(); // Prevent default # navigation that goes to top
+        return;
+      }
+      
+      // Only handle navigation links and specific CTA buttons
+      if (!link.classList.contains('nav-link') && 
+          !link.classList.contains('nav-logo') && 
+          !link.classList.contains('btn-primary') && 
+          !link.classList.contains('btn-secondary')) {
+        return;
+      }
       
       e.preventDefault();
       
@@ -198,13 +222,18 @@ function initSimpleSmoothScrolling() {
   console.log('Simple Smooth Scrolling initialized successfully!');
 }
 
+// Don't auto-initialize - let script.js control the initialization order
+// This prevents conflicts with modal functions
+/* 
 // Auto-initialize
 if (document.readyState !== 'loading') {
   initSimpleSmoothScrolling();
 } else {
   document.addEventListener('DOMContentLoaded', initSimpleSmoothScrolling);
 }
+*/
 
 // Export for global access
 window.SimpleSmoothScroll = SimpleSmoothScroll;
 window.simpleSmoothScroll = simpleSmoothScroll;
+window.initSimpleSmoothScrolling = initSimpleSmoothScrolling;

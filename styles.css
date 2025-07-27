@@ -586,7 +586,7 @@ body.light-mode .stage.active {
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto; /* DISABLED: was smooth - testing modal fix */
   overflow-x: hidden;
   scroll-padding-top: 80px;
 }
@@ -4079,9 +4079,7 @@ body.light-mode .spec-value {
 /* Prevent background scrolling when modals are open */
 body.modal-open {
   overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
+  /* REMOVED: position: fixed; width: 100%; height: 100%; - was causing scroll-to-top */
 }
 
 /* Light Mode */
@@ -4518,14 +4516,14 @@ body.light-mode .order-form select option {
    ENHANCED SMOOTH SCROLLING - NO CONFLICTS
    =============================================== */
 
-/* Enhanced smooth scrolling */
+/* Enhanced smooth scrolling - DISABLED FOR MODAL TESTING */
 html {
-  scroll-behavior: smooth !important;
+  scroll-behavior: auto !important; /* DISABLED: was smooth !important */
   scroll-padding-top: 80px;
 }
 
 body {
-  scroll-behavior: smooth !important;
+  scroll-behavior: auto !important; /* DISABLED: was smooth !important */
 }
 
 /* Gaming-quality font rendering */

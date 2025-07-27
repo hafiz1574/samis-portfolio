@@ -1,19 +1,87 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // Force page to start at top immediately
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
+  // Force page to start at top immediately - ONLY ON INITIAL LOAD
+  if (!sessionStorage.getItem('pageLoaded')) {
+    // REMOVED: window.scrollTo(0, 0); - was causing modal scroll issues
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    sessionStorage.setItem('pageLoaded', 'true');
+  }
   
   // Prevent scroll restoration
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
+
+// Global project data for inline handlers - define early
+window.projectData = {
+  'ecommerce': {
+    title: 'E-commerce Platform',
+    description: 'A comprehensive e-commerce solution built with modern technologies. Features include user authentication, product catalog, shopping cart, payment processing, order management, inventory tracking, and admin dashboard. Perfect for businesses looking to establish or upgrade their online presence.',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    features: [
+      'User Registration & Authentication',
+      'Product Catalog with Search & Filters',
+      'Shopping Cart & Wishlist',
+      'Secure Payment Integration',
+      'Order Management System',
+      'Inventory Management',
+      'Admin Dashboard',
+      'Mobile Responsive Design',
+      'SEO Optimized'
+    ],
+    price: '$2,499',
+    delivery: '3-4 weeks'
+  },
+  'mobile-app': {
+    title: 'Mobile Fitness App',
+    description: 'Cross-platform mobile application for fitness tracking and social engagement. Built with Flutter for iOS and Android. Includes workout tracking, progress monitoring, social features, personalized recommendations, and integration with wearable devices.',
+    image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    features: [
+      'Cross-platform (iOS & Android)',
+      'Workout Tracking & Plans',
+      'Progress Analytics',
+      'Social Features & Challenges',
+      'Nutrition Tracking',
+      'Wearable Device Integration',
+      'Push Notifications',
+      'Offline Mode Support',
+      'Cloud Data Sync'
+    ],
+    price: '$3,999',
+    delivery: '4-6 weeks'
+  },
+  'dashboard': {
+    title: 'Data Analytics Dashboard',
+    description: 'Real-time business intelligence dashboard with interactive visualizations. Perfect for data-driven decision making. Features custom charts, real-time data processing, automated reporting, and integration with multiple data sources.',
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    features: [
+      'Real-time Data Processing',
+      'Interactive Charts & Graphs',
+      'Custom KPI Tracking',
+      'Automated Report Generation',
+      'Multiple Data Source Integration',
+      'Role-based Access Control',
+      'Export & Sharing Features',
+      'Mobile Responsive',
+      'API Integration'
+    ],
+    price: '$1,899',
+    delivery: '2-3 weeks'
+  }
+};
   
   // Initialize scroll navbar immediately (before page loader)
   initScrollNavbar();
   
-  // Initialize modal system FIRST before anything else
-  initModalSystem();
+  // Initialize modal system FIRST before anything else - DISABLED TO PREVENT CONFLICTS
+  // initModalSystem();
+  
+  // Initialize smooth scrolling AFTER modal system - TEMPORARILY DISABLED
+  /*
+  if (typeof window.initSimpleSmoothScrolling === 'function') {
+    window.initSimpleSmoothScrolling();
+  }
+  */
   
   // Initialize page loader first
   initPageLoader();
@@ -27,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initStickyLogo(); // Initialize sticky logo functionality
     initMobileMenu(); // Initialize mobile hamburger menu
     
-    // Use original SectionManager (no conflicts)
+    // Use original SectionManager (no conflicts) - RE-ENABLED WITH MODAL FIXES
     new SectionManager();
     
     initProjectModals();
@@ -43,10 +111,13 @@ document.addEventListener('DOMContentLoaded', function() {
       new Blender3DShowcase();
     }, 500);
     
-    // Ensure we're still at the top after initialization
+    // RE-INITIALIZE MODAL SYSTEM AFTER EVERYTHING IS LOADED
     setTimeout(() => {
-      window.scrollTo(0, 0);
-    }, 100);
+      initModalSystemLate();
+    }, 1000);
+    
+    // NOTE: Removed automatic scroll to top - was causing modal scroll issues
+    // The initial scroll to top on page load (lines 3-5) is sufficient
   }, 1000);
 });
 
@@ -104,56 +175,260 @@ function initTypingEffect() {
   setTimeout(type, 1000);
 }
 
-// Early modal system initialization to prevent conflicts
+// Early modal system initialization to prevent conflicts - DISABLED
 function initModalSystem() {
-  console.log('Initializing modal system early...');
+  console.log('=== OLD MODAL SYSTEM DISABLED ===');
   
-  // Since we're using inline onclick handlers, we only need to setup modal close functionality
+  // DISABLED: This old modal system was causing conflicts with the new one
+  // The new initModalSystemLate() function handles all modal functionality
+  
+  /* DISABLED: Competing event listener was causing scroll issues
+  document.addEventListener('click', function(e) {
+    const serviceCard = e.target.closest('.service-card');
+    if (serviceCard) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('=== SERVICE CARD CLICKED VIA EVENT LISTENER ===');
+      openServiceModalViaListener(serviceCard);
+      return false;
+    }
+    
+    const portfolioCard = e.target.closest('.portfolio-item');
+    if (portfolioCard) {
+      e.preventDefault(); 
+      e.stopPropagation();
+      console.log('=== PORTFOLIO CARD CLICKED VIA EVENT LISTENER ===');
+      openProjectModalViaListener(portfolioCard);
+      return false;
+    }
+  });
+  */
+  
+  console.log('Old modal system disabled - using initModalSystemLate() instead');
+  
+  // Only setup modal close functionality (this is still needed)
   setupModalCloseFunctionality();
 }
 
-// Direct inline functions that will override everything else
-window.openServiceModal = function(element) {
-  console.log('openServiceModal called directly');
+// Late initialization after all other systems are ready
+function initModalSystemLate() {
+  console.log('=== LATE MODAL SYSTEM INITIALIZATION ===');
+  
+  // Remove ANY existing event listeners that might be interfering
+  const existingListener = document._modalListener;
+  if (existingListener) {
+    document.removeEventListener('click', existingListener, true);
+    document.removeEventListener('click', existingListener, false);
+  }
+  
+  // SCOPED MODAL SYSTEM - Only bind to specific elements
+  // Bind modal handlers directly to service cards only
+  document.querySelectorAll('.service-card').forEach(serviceCard => {
+    serviceCard.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('=== SERVICE CARD CLICKED ===');
+      console.log('Target:', e.target);
+      console.log('Current scroll position:', window.pageYOffset || document.documentElement.scrollTop);
+      
+      openServiceModalDirect(serviceCard);
+      
+      // Check scroll position after modal opens
+      setTimeout(() => {
+        console.log('Scroll position after modal open:', window.pageYOffset || document.documentElement.scrollTop);
+      }, 100);
+    });
+  });
+  
+  // Bind modal handlers directly to portfolio items only
+  document.querySelectorAll('.portfolio-item').forEach(portfolioCard => {
+    portfolioCard.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('=== PORTFOLIO CARD CLICKED ===');
+      console.log('Target:', e.target);
+      console.log('Current scroll position:', window.pageYOffset || document.documentElement.scrollTop);
+      
+      openProjectModalDirect(portfolioCard);
+      
+      // Check scroll position after modal opens
+      setTimeout(() => {
+        console.log('Scroll position after modal open:', window.pageYOffset || document.documentElement.scrollTop);
+      }, 100);
+    });
+  });
+  
+  // Setup close functionality for all modals
+  setupModalCloseFunctionality();
+  
+  // Handle problematic href="#" links specifically
+  handleProblematicLinks();
+  
+  console.log('Late modal system initialized with scoped handlers');
+}
+
+function openServiceModalDirect(element) {
+  console.log('Opening service modal directly');
   
   const modal = document.getElementById('modal');
-  if (!modal) return false;
+  if (!modal) {
+    console.error('Modal element not found');
+    return;
+  }
+  
+  const title = element.querySelector('h3');
+  const desc = element.querySelector('p');
+  
+  if (!title || !desc) {
+    console.error('Service card content not found');
+    return;
+  }
+  
+  const modalTitle = document.getElementById('modal-title');
+  const modalDesc = document.getElementById('modal-desc');
+  
+  if (!modalTitle || !modalDesc) {
+    console.error('Modal content elements not found');
+    return;
+  }
+  
+  // Set content
+  modalTitle.textContent = title.textContent;
+  modalDesc.textContent = desc.textContent;
+  
+  // Show modal
+  modal.classList.add('open');
+  document.body.classList.add('modal-open');
+  
+  console.log('Service modal opened successfully');
+}
+
+function openProjectModalDirect(element) {
+  console.log('Opening project modal directly');
+  
+  const projectModal = document.getElementById('project-modal');
+  if (!projectModal) {
+    console.error('Project modal element not found');
+    return;
+  }
+  
+  const projectType = element.getAttribute('data-project');
+  if (!projectType) {
+    console.error('Project type not found');
+    return;
+  }
+  
+  const project = window.projectData ? window.projectData[projectType] : null;
+  if (!project) {
+    console.error('Project data not found for:', projectType);
+    return;
+  }
+  
+  // Populate modal
+  const modalTitle = document.getElementById('project-modal-title');
+  const modalDesc = document.getElementById('project-modal-description');
+  const modalImage = document.getElementById('project-modal-image');
+  const projectPrice = document.getElementById('project-price');
+  const projectDelivery = document.getElementById('project-delivery');
+  
+  if (modalTitle) modalTitle.textContent = project.title;
+  if (modalDesc) modalDesc.textContent = project.description;
+  if (modalImage) {
+    modalImage.src = project.image;
+    modalImage.alt = project.title;
+  }
+  if (projectPrice) projectPrice.textContent = project.price;
+  if (projectDelivery) projectDelivery.textContent = project.delivery;
+  
+  // Populate features
+  const featuresList = document.getElementById('project-features-list');
+  if (featuresList && project.features) {
+    featuresList.innerHTML = '';
+    project.features.forEach(feature => {
+      const li = document.createElement('li');
+      li.textContent = feature;
+      featuresList.appendChild(li);
+    });
+  }
+  
+  // Show modal
+  projectModal.classList.add('open');
+  document.body.classList.add('modal-open');
+  projectModal.setAttribute('data-current-project', projectType);
+  
+  console.log('Project modal opened successfully');
+}
+
+function openServiceModalViaListener(element) {
+  console.log('Service modal via event listener');
+  
+  const modal = document.getElementById('modal');
+  if (!modal) {
+    console.error('Service modal not found');
+    return false;
+  }
   
   const title = element.querySelector('h3');
   const desc = element.querySelector('p');
   
   if (title && desc) {
-    document.getElementById('modal-title').textContent = title.textContent;
-    document.getElementById('modal-desc').textContent = desc.textContent;
-    modal.classList.add('open');
-    document.body.classList.add('modal-open');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    
+    if (modalTitle && modalDesc) {
+      modalTitle.textContent = title.textContent;
+      modalDesc.textContent = desc.textContent;
+      modal.classList.add('open');
+      document.body.classList.add('modal-open');
+      console.log('Service modal opened successfully via listener');
+    } else {
+      console.error('Modal title or description elements not found');
+    }
+  } else {
+    console.error('Service card title or description not found');
   }
   
   return false;
-};
+}
 
-window.openProjectModal = function(element) {
-  console.log('openProjectModal called directly');
+function openProjectModalViaListener(element) {
+  console.log('Project modal via event listener');
   
   const projectModal = document.getElementById('project-modal');
-  if (!projectModal) return false;
+  if (!projectModal) {
+    console.error('Project modal not found');
+    return false;
+  }
   
   const projectType = element.getAttribute('data-project');
-  const project = window.projectData[projectType];
+  const project = window.projectData ? window.projectData[projectType] : null;
   
-  if (!project) return false;
+  if (!project) {
+    console.error('Project data not found for:', projectType);
+    return false;
+  }
   
   // Populate project modal
-  document.getElementById('project-modal-title').textContent = project.title;
-  document.getElementById('project-modal-description').textContent = project.description;
-  document.getElementById('project-modal-image').src = project.image;
-  document.getElementById('project-modal-image').alt = project.title;
-  document.getElementById('project-price').textContent = project.price;
-  document.getElementById('project-delivery').textContent = project.delivery;
+  const modalTitle = document.getElementById('project-modal-title');
+  const modalDesc = document.getElementById('project-modal-description');
+  const modalImage = document.getElementById('project-modal-image');
+  const projectPrice = document.getElementById('project-price');
+  const projectDelivery = document.getElementById('project-delivery');
+  
+  if (modalTitle) modalTitle.textContent = project.title;
+  if (modalDesc) modalDesc.textContent = project.description;
+  if (modalImage) {
+    modalImage.src = project.image;
+    modalImage.alt = project.title;
+  }
+  if (projectPrice) projectPrice.textContent = project.price;
+  if (projectDelivery) projectDelivery.textContent = project.delivery;
   
   // Populate features list
   const featuresList = document.getElementById('project-features-list');
-  if (featuresList) {
+  if (featuresList && project.features) {
     featuresList.innerHTML = '';
     project.features.forEach(feature => {
       const li = document.createElement('li');
@@ -165,6 +440,107 @@ window.openProjectModal = function(element) {
   // Show project modal
   projectModal.classList.add('open');
   document.body.classList.add('modal-open');
+  console.log('Project modal opened successfully via listener');
+  
+  // Store project data for order form
+  projectModal.setAttribute('data-current-project', projectType);
+  
+  return false;
+}
+
+// Direct inline functions that will override everything else
+window.openServiceModal = function(element) {
+  console.log('=== SERVICE MODAL CLICKED ===');
+  
+  // Stop any event propagation
+  if (typeof event !== 'undefined') {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  
+  const modal = document.getElementById('modal');
+  if (!modal) {
+    console.error('Service modal not found');
+    return false;
+  }
+  
+  const title = element.querySelector('h3');
+  const desc = element.querySelector('p');
+  
+  if (title && desc) {
+    const modalTitle = document.getElementById('modal-title');
+    const modalDesc = document.getElementById('modal-desc');
+    
+    if (modalTitle && modalDesc) {
+      modalTitle.textContent = title.textContent;
+      modalDesc.textContent = desc.textContent;
+      modal.classList.add('open');
+      document.body.classList.add('modal-open');
+      console.log('Service modal opened successfully');
+    } else {
+      console.error('Modal title or description elements not found');
+    }
+  } else {
+    console.error('Service card title or description not found');
+  }
+  
+  return false;
+};
+
+window.openProjectModal = function(element) {
+  console.log('=== PROJECT MODAL CLICKED ===');
+  
+  // Stop any event propagation
+  if (typeof event !== 'undefined') {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+  
+  const projectModal = document.getElementById('project-modal');
+  if (!projectModal) {
+    console.error('Project modal not found');
+    return false;
+  }
+  
+  const projectType = element.getAttribute('data-project');
+  const project = window.projectData ? window.projectData[projectType] : null;
+  
+  if (!project) {
+    console.error('Project data not found for:', projectType);
+    return false;
+  }
+  
+  // Populate project modal
+  const modalTitle = document.getElementById('project-modal-title');
+  const modalDesc = document.getElementById('project-modal-description');
+  const modalImage = document.getElementById('project-modal-image');
+  const projectPrice = document.getElementById('project-price');
+  const projectDelivery = document.getElementById('project-delivery');
+  
+  if (modalTitle) modalTitle.textContent = project.title;
+  if (modalDesc) modalDesc.textContent = project.description;
+  if (modalImage) {
+    modalImage.src = project.image;
+    modalImage.alt = project.title;
+  }
+  if (projectPrice) projectPrice.textContent = project.price;
+  if (projectDelivery) projectDelivery.textContent = project.delivery;
+  
+  // Populate features list
+  const featuresList = document.getElementById('project-features-list');
+  if (featuresList && project.features) {
+    featuresList.innerHTML = '';
+    project.features.forEach(feature => {
+      const li = document.createElement('li');
+      li.textContent = feature;
+      featuresList.appendChild(li);
+    });
+  }
+  
+  // Show project modal
+  projectModal.classList.add('open');
+  document.body.classList.add('modal-open');
+  console.log('Project modal opened successfully');
   
   // Store project data for order form
   projectModal.setAttribute('data-current-project', projectType);
@@ -174,24 +550,87 @@ window.openProjectModal = function(element) {
 
 function setupModalCloseFunctionality() {
   const modal = document.getElementById('modal');
-  if (!modal) return;
+  const projectModal = document.getElementById('project-modal');
+  const orderModal = document.getElementById('order-modal');
   
-  // Setup modal close functionality
-  const closeBtn = document.querySelector('.close-btn');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      modal.classList.remove('open');
-      document.body.classList.remove('modal-open');
+  // Setup service modal close functionality
+  if (modal) {
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      });
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        e.preventDefault();
+        modal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      }
     });
   }
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      e.preventDefault();
-      modal.classList.remove('open');
-      document.body.classList.remove('modal-open');
+  
+  // Setup project modal close functionality
+  if (projectModal) {
+    const projectCloseBtn = document.querySelector('.project-close-btn');
+    if (projectCloseBtn) {
+      projectCloseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        projectModal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      });
     }
+
+    projectModal.addEventListener('click', (e) => {
+      if (e.target === projectModal) {
+        e.preventDefault();
+        projectModal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      }
+    });
+  }
+  
+  // Setup order modal close functionality
+  if (orderModal) {
+    const orderCloseBtn = document.querySelector('.order-close-btn');
+    if (orderCloseBtn) {
+      orderCloseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        orderModal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      });
+    }
+
+    orderModal.addEventListener('click', (e) => {
+      if (e.target === orderModal) {
+        e.preventDefault();
+        orderModal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+      }
+    });
+  }
+}
+
+// Handle specific problematic href="#" links without interfering with modal system
+function handleProblematicLinks() {
+  // Target specific buttons that use href="#"
+  document.querySelectorAll('a.gig-btn, a.profile-btn, a[href="#"]').forEach(link => {
+    // Skip if this link is inside a service or portfolio card (let modal system handle those)
+    if (link.closest('.service-card') || link.closest('.portfolio-item')) {
+      return;
+    }
+    
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      console.log('Prevented href="#" navigation for non-modal link:', link.className);
+      return false;
+    });
   });
 }
 
@@ -684,25 +1123,57 @@ class SectionManager {
   }
 
   bindNavigation() {
-    // Enhanced navigation with smooth scrolling support
-    document.querySelectorAll('.nav-menu .nav-link, .nav-logo, .cta-buttons .btn').forEach(anchor => {
+    // Enhanced navigation with smooth scrolling support - MODIFIED FOR MODAL COMPATIBILITY
+    document.querySelectorAll('.nav-menu .nav-link, .nav-logo').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
+        // Check if click is specifically ON the card itself (not modal elements) - if so, ignore
+        const isModalCard = (e.target.closest('.service-card') || e.target.closest('.portfolio-item')) && 
+                           !e.target.closest('.modal') && !e.target.closest('.project-modal');
+        if (isModalCard) {
+          return; // Let modal system handle this
+        }
+        
         e.preventDefault();
         const targetId = anchor.getAttribute('href').substring(1);
         
         if (targetId === 'home') {
           window.scrollTo({ 
             top: 0, 
-            behavior: 'smooth' 
+            behavior: 'auto' // Changed from 'smooth' to 'auto'
           });
         } else {
           const target = document.getElementById(targetId);
           if (target) {
-            target.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'center'
+            const targetOffset = target.offsetTop - 80; // Account for navbar
+            window.scrollTo({
+              top: targetOffset,
+              behavior: 'auto' // Changed from 'smooth' to 'auto'
             });
           }
+        }
+      });
+    });
+    
+    // Handle CTA buttons separately to avoid conflicts
+    document.querySelectorAll('.cta-buttons .btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        // Check if click is specifically ON the card itself (not modal elements) - if so, ignore
+        const isModalCard = (e.target.closest('.service-card') || e.target.closest('.portfolio-item')) && 
+                           !e.target.closest('.modal') && !e.target.closest('.project-modal');
+        if (isModalCard) {
+          return; // Let modal system handle this
+        }
+        
+        e.preventDefault();
+        const targetId = button.getAttribute('href').substring(1);
+        
+        const target = document.getElementById(targetId);
+        if (target) {
+          const targetOffset = target.offsetTop - 80; // Account for navbar
+          window.scrollTo({
+            top: targetOffset,
+            behavior: 'auto' // Changed from 'smooth' to 'auto'
+          });
         }
       });
     });
@@ -714,64 +1185,6 @@ function initProjectModals() {
   const orderModal = document.getElementById('order-modal');
   
   if (!projectModal || !orderModal) return;
-
-// Global project data for inline handlers
-window.projectData = {
-  'ecommerce': {
-    title: 'E-commerce Platform',
-    description: 'A comprehensive e-commerce solution built with modern technologies. Features include user authentication, product catalog, shopping cart, payment processing, order management, inventory tracking, and admin dashboard. Perfect for businesses looking to establish or upgrade their online presence.',
-    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    features: [
-      'User Registration & Authentication',
-      'Product Catalog with Search & Filters',
-      'Shopping Cart & Wishlist',
-      'Secure Payment Integration',
-      'Order Management System',
-      'Inventory Management',
-      'Admin Dashboard',
-      'Mobile Responsive Design',
-      'SEO Optimized'
-    ],
-    price: '$2,499',
-    delivery: '3-4 weeks'
-  },
-  'mobile-app': {
-    title: 'Mobile Fitness App',
-    description: 'Cross-platform mobile application for fitness tracking and social engagement. Built with Flutter for iOS and Android. Includes workout tracking, progress monitoring, social features, personalized recommendations, and integration with wearable devices.',
-    image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    features: [
-      'Cross-platform (iOS & Android)',
-      'Workout Tracking & Plans',
-      'Progress Analytics',
-      'Social Features & Challenges',
-      'Nutrition Tracking',
-      'Wearable Device Integration',
-      'Push Notifications',
-      'Offline Mode Support',
-      'Cloud Data Sync'
-    ],
-    price: '$3,999',
-    delivery: '4-6 weeks'
-  },
-  'dashboard': {
-    title: 'Data Analytics Dashboard',
-    description: 'Real-time business intelligence dashboard with interactive visualizations. Perfect for data-driven decision making. Features custom charts, real-time data processing, automated reporting, and integration with multiple data sources.',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    features: [
-      'Real-time Data Processing',
-      'Interactive Charts & Graphs',
-      'Custom KPI Tracking',
-      'Automated Report Generation',
-      'Multiple Data Source Integration',
-      'Role-based Access Control',
-      'Export & Sharing Features',
-      'Mobile Responsive',
-      'API Integration'
-    ],
-    price: '$1,899',
-    delivery: '2-3 weeks'
-  }
-};
 
   // Since we're using inline onclick handlers for portfolio items, 
   // we only need to setup the modal button handlers
@@ -812,25 +1225,7 @@ window.projectData = {
     });
   }
 
-  // Close buttons
-  const projectCloseBtn = document.querySelector('.project-close-btn');
-  if (projectCloseBtn) {
-    projectCloseBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      projectModal.classList.remove('open');
-      document.body.classList.remove('modal-open');
-    });
-  }
-
-  const orderCloseBtn = document.querySelector('.order-close-btn');
-  if (orderCloseBtn) {
-    orderCloseBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      orderModal.classList.remove('open');
-      document.body.classList.remove('modal-open');
-    });
-  }
-
+  // Cancel order button (keep this as it's different from close)
   const cancelOrderBtn = document.querySelector('.cancel-order-btn');
   if (cancelOrderBtn) {
     cancelOrderBtn.addEventListener('click', (e) => {
@@ -840,20 +1235,8 @@ window.projectData = {
     });
   }
 
-  // Click outside to close
-  projectModal.addEventListener('click', (e) => {
-    if (e.target === projectModal) {
-      projectModal.classList.remove('open');
-      document.body.classList.remove('modal-open');
-    }
-  });
-
-  orderModal.addEventListener('click', (e) => {
-    if (e.target === orderModal) {
-      orderModal.classList.remove('open');
-      document.body.classList.remove('modal-open');
-    }
-  });
+  // Note: Close buttons are now handled by setupModalCloseFunctionality()
+  // Click outside to close functionality is also handled there
 
   // Order form submission
   const orderForm = document.querySelector('.order-form');
@@ -1809,6 +2192,8 @@ document.addEventListener('DOMContentLoaded', function() {
   optimizeLoadingPerformance();
 });
 
+// DISABLED: Additional scroll protection - was causing modal scroll issues
+/*
 // Additional scroll protection - run immediately
 (function() {
   // Force immediate scroll to top
@@ -1846,6 +2231,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.scrollTo(0, 0);
   }
 })();
+*/
 
 // ===============================================
 // RANDOMIZED PARTICLE SYSTEM - ERROR-FREE
