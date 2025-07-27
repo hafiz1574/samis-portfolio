@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Force page to start at top immediately - ONLY ON INITIAL LOAD
   if (!sessionStorage.getItem('pageLoaded')) {
     // REMOVED: window.scrollTo(0, 0); - was causing modal scroll issues
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // REMOVED: document.documentElement.scrollTop = 0; - was causing modal issues
+    // REMOVED: document.body.scrollTop = 0; - was causing modal issues
     sessionStorage.setItem('pageLoaded', 'true');
   }
   
@@ -212,119 +212,64 @@ function initModalSystem() {
 
 // Late initialization after all other systems are ready
 function initModalSystemLate() {
-  console.log('=== LATE MODAL SYSTEM INITIALIZATION ===');
-  
-  // Remove ANY existing event listeners that might be interfering
-  const existingListener = document._modalListener;
-  if (existingListener) {
-    document.removeEventListener('click', existingListener, true);
-    document.removeEventListener('click', existingListener, false);
-  }
-  
-  // SCOPED MODAL SYSTEM - Only bind to specific elements
-  // Bind modal handlers directly to service cards only
+  // Bind modal handlers directly to service cards
   document.querySelectorAll('.service-card').forEach(serviceCard => {
     serviceCard.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
-      console.log('=== SERVICE CARD CLICKED ===');
-      console.log('Target:', e.target);
-      console.log('Current scroll position:', window.pageYOffset || document.documentElement.scrollTop);
-      
       openServiceModalDirect(serviceCard);
-      
-      // Check scroll position after modal opens
-      setTimeout(() => {
-        console.log('Scroll position after modal open:', window.pageYOffset || document.documentElement.scrollTop);
-      }, 100);
     });
   });
   
-  // Bind modal handlers directly to portfolio items only
+  // Bind modal handlers directly to portfolio items
   document.querySelectorAll('.portfolio-item').forEach(portfolioCard => {
     portfolioCard.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
-      console.log('=== PORTFOLIO CARD CLICKED ===');
-      console.log('Target:', e.target);
-      console.log('Current scroll position:', window.pageYOffset || document.documentElement.scrollTop);
-      
       openProjectModalDirect(portfolioCard);
-      
-      // Check scroll position after modal opens
-      setTimeout(() => {
-        console.log('Scroll position after modal open:', window.pageYOffset || document.documentElement.scrollTop);
-      }, 100);
     });
   });
   
   // Setup close functionality for all modals
   setupModalCloseFunctionality();
-  
-  // Handle problematic href="#" links specifically
-  handleProblematicLinks();
-  
-  console.log('Late modal system initialized with scoped handlers');
 }
 
 function openServiceModalDirect(element) {
-  console.log('Opening service modal directly');
-  
   const modal = document.getElementById('modal');
-  if (!modal) {
-    console.error('Modal element not found');
-    return;
-  }
+  if (!modal) return;
   
   const title = element.querySelector('h3');
   const desc = element.querySelector('p');
   
-  if (!title || !desc) {
-    console.error('Service card content not found');
-    return;
-  }
+  if (!title || !desc) return;
   
   const modalTitle = document.getElementById('modal-title');
   const modalDesc = document.getElementById('modal-desc');
   
-  if (!modalTitle || !modalDesc) {
-    console.error('Modal content elements not found');
-    return;
-  }
+  if (!modalTitle || !modalDesc) return;
   
   // Set content
   modalTitle.textContent = title.textContent;
   modalDesc.textContent = desc.textContent;
   
-  // Show modal
-  modal.classList.add('open');
+  // Prevent background scrolling
   document.body.classList.add('modal-open');
   
-  console.log('Service modal opened successfully');
+  // Show modal
+  modal.style.display = 'flex';
+  modal.style.visibility = 'visible';
+  modal.classList.add('open');
 }
 
 function openProjectModalDirect(element) {
-  console.log('Opening project modal directly');
-  
   const projectModal = document.getElementById('project-modal');
-  if (!projectModal) {
-    console.error('Project modal element not found');
-    return;
-  }
+  if (!projectModal) return;
   
   const projectType = element.getAttribute('data-project');
-  if (!projectType) {
-    console.error('Project type not found');
-    return;
-  }
+  if (!projectType) return;
   
   const project = window.projectData ? window.projectData[projectType] : null;
-  if (!project) {
-    console.error('Project data not found for:', projectType);
-    return;
-  }
+  if (!project) return;
   
   // Populate modal
   const modalTitle = document.getElementById('project-modal-title');
@@ -353,16 +298,18 @@ function openProjectModalDirect(element) {
     });
   }
   
-  // Show modal
-  projectModal.classList.add('open');
+  // Prevent background scrolling
   document.body.classList.add('modal-open');
-  projectModal.setAttribute('data-current-project', projectType);
   
-  console.log('Project modal opened successfully');
+  // Show modal
+  projectModal.style.display = 'flex';
+  projectModal.style.visibility = 'visible';
+  projectModal.classList.add('open');
+  projectModal.setAttribute('data-current-project', projectType);
 }
 
 function openServiceModalViaListener(element) {
-  console.log('Service modal via event listener');
+  console.log('Service modal via event listener with animation');
   
   const modal = document.getElementById('modal');
   if (!modal) {
@@ -380,9 +327,21 @@ function openServiceModalViaListener(element) {
     if (modalTitle && modalDesc) {
       modalTitle.textContent = title.textContent;
       modalDesc.textContent = desc.textContent;
-      modal.classList.add('open');
+      
+      // Show modal with smooth animation
+      // Save current scroll position before fixing body
+      window.saveScrollPosition();
+      
+      modal.style.display = 'flex';
+      modal.style.visibility = 'visible';
       document.body.classList.add('modal-open');
-      console.log('Service modal opened successfully via listener');
+      
+      // Trigger animation after a small delay
+      requestAnimationFrame(() => {
+        modal.classList.add('open');
+      });
+      
+      console.log('Service modal opened successfully via listener with animation');
     } else {
       console.error('Modal title or description elements not found');
     }
@@ -437,13 +396,21 @@ function openProjectModalViaListener(element) {
     });
   }
   
-  // Show project modal
-  projectModal.classList.add('open');
-  document.body.classList.add('modal-open');
-  console.log('Project modal opened successfully via listener');
+  // Show project modal with smooth animation
+  // Save current scroll position before fixing body
+  window.saveScrollPosition();
   
-  // Store project data for order form
+  projectModal.style.display = 'flex';
+  projectModal.style.visibility = 'visible';
+  document.body.classList.add('modal-open');
   projectModal.setAttribute('data-current-project', projectType);
+  
+  // Trigger animation after a small delay
+  requestAnimationFrame(() => {
+    projectModal.classList.add('open');
+  });
+  
+  console.log('Project modal opened successfully via listener with animation');
   
   return false;
 }
@@ -553,68 +520,77 @@ function setupModalCloseFunctionality() {
   const projectModal = document.getElementById('project-modal');
   const orderModal = document.getElementById('order-modal');
   
-  // Setup service modal close functionality
+  // Helper function to close modal
+  function closeModal(modalElement) {
+    modalElement.classList.remove('open');
+    modalElement.style.visibility = 'hidden';
+    modalElement.style.display = 'none';
+    
+    // Remove modal-open class to restore scrolling
+    document.body.classList.remove('modal-open');
+    
+    modalElement.removeAttribute('data-current-project');
+  }
+  
+  // Setup service modal close
   if (modal) {
     const closeBtn = document.querySelector('.close-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        modal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(modal);
       });
     }
-
+    
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
-        e.preventDefault();
-        modal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(modal);
       }
     });
   }
   
-  // Setup project modal close functionality
+  // Setup project modal close
   if (projectModal) {
     const projectCloseBtn = document.querySelector('.project-close-btn');
     if (projectCloseBtn) {
       projectCloseBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        projectModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(projectModal);
       });
     }
-
+    
     projectModal.addEventListener('click', (e) => {
       if (e.target === projectModal) {
-        e.preventDefault();
-        projectModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(projectModal);
       }
     });
   }
   
-  // Setup order modal close functionality
+  // Setup order modal close
   if (orderModal) {
     const orderCloseBtn = document.querySelector('.order-close-btn');
     if (orderCloseBtn) {
       orderCloseBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        orderModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(orderModal);
       });
     }
-
+    
     orderModal.addEventListener('click', (e) => {
       if (e.target === orderModal) {
-        e.preventDefault();
-        orderModal.classList.remove('open');
-        document.body.classList.remove('modal-open');
+        closeModal(orderModal);
       }
     });
   }
+  
+  // ESC key support
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (modal && modal.classList.contains('open')) closeModal(modal);
+      if (projectModal && projectModal.classList.contains('open')) closeModal(projectModal);
+      if (orderModal && orderModal.classList.contains('open')) closeModal(orderModal);
+    }
+  });
 }
 
 // Handle specific problematic href="#" links without interfering with modal system
@@ -1003,6 +979,25 @@ function initStickyLogo() {
     }
   }, { passive: true });
   
+  // Add click event to scroll to top smoothly
+  stickyLogo.addEventListener('click', () => {
+    console.log('Sticky logo clicked - scrolling to top');
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+  
+  // Add hover effect for better UX
+  stickyLogo.addEventListener('mouseenter', () => {
+    stickyLogo.style.transform = 'scale(1.1)';
+    stickyLogo.style.cursor = 'pointer';
+  });
+  
+  stickyLogo.addEventListener('mouseleave', () => {
+    stickyLogo.style.transform = 'scale(1)';
+  });
+  
   // Initial check
   handleStickyLogoVisibility();
   
@@ -1139,7 +1134,7 @@ class SectionManager {
         if (targetId === 'home') {
           window.scrollTo({ 
             top: 0, 
-            behavior: 'auto' // Changed from 'smooth' to 'auto'
+            behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
           });
         } else {
           const target = document.getElementById(targetId);
@@ -1147,7 +1142,7 @@ class SectionManager {
             const targetOffset = target.offsetTop - 80; // Account for navbar
             window.scrollTo({
               top: targetOffset,
-              behavior: 'auto' // Changed from 'smooth' to 'auto'
+              behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
             });
           }
         }
@@ -1172,7 +1167,7 @@ class SectionManager {
           const targetOffset = target.offsetTop - 80; // Account for navbar
           window.scrollTo({
             top: targetOffset,
-            behavior: 'auto' // Changed from 'smooth' to 'auto'
+            behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
           });
         }
       });
@@ -1186,8 +1181,30 @@ function initProjectModals() {
   
   if (!projectModal || !orderModal) return;
 
-  // Since we're using inline onclick handlers for portfolio items, 
-  // we only need to setup the modal button handlers
+  // Setup portfolio card click handlers
+  const portfolioItems = document.querySelectorAll('.portfolio-item');
+  portfolioItems.forEach(item => {
+    const viewBtn = item.querySelector('.view-project-btn');
+    if (viewBtn) {
+      viewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const projectType = item.getAttribute('data-project');
+        if (projectType) {
+          openProjectModalDirect(item);
+        }
+      });
+    }
+    
+    // Also make the entire card clickable
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const projectType = item.getAttribute('data-project');
+      if (projectType) {
+        openProjectModalDirect(item);
+      }
+    });
+  });
 
   // Order now button
   const orderNowBtn = document.querySelector('.order-now-btn');
@@ -1215,13 +1232,19 @@ function initProjectModals() {
       e.preventDefault();
       
       projectModal.classList.remove('open');
+      
+      // Get saved scroll position and restore
+      const savedScrollPosition = window.savedScrollPosition || 0;
       document.body.classList.remove('modal-open');
+      window.scrollTo(0, savedScrollPosition);
       
       // Scroll to contact section
-      document.getElementById('contact').scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'center'
-      });
+      setTimeout(() => {
+        document.getElementById('contact').scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 100);
     });
   }
 
@@ -1231,7 +1254,11 @@ function initProjectModals() {
     cancelOrderBtn.addEventListener('click', (e) => {
       e.preventDefault();
       orderModal.classList.remove('open');
+      
+      // Get saved scroll position and restore
+      const savedScrollPosition = window.savedScrollPosition || 0;
       document.body.classList.remove('modal-open');
+      window.scrollTo(0, savedScrollPosition);
     });
   }
 
@@ -1247,7 +1274,11 @@ function initProjectModals() {
       alert('Thank you for your order request! We will contact you within 24 hours to discuss the details and payment options.');
       
       orderModal.classList.remove('open');
+      
+      // Get saved scroll position and restore
+      const savedScrollPosition = window.savedScrollPosition || 0;
       document.body.classList.remove('modal-open');
+      window.scrollTo(0, savedScrollPosition);
       
       // Reset form
       e.target.reset();
@@ -2392,3 +2423,118 @@ function initMobileMenu() {
     }
   });
 }
+
+// ===============================================
+// ANIMATED FAVICON SYSTEM
+// ===============================================
+
+function drawLogoWithParticles(ctx, particles, flickerPhase) {
+    // Clear with transparent background
+    ctx.clearRect(0, 0, 64, 64);
+
+    // --- Outer glow layer ---
+    const glowRadius = 28;
+    ctx.beginPath();
+    ctx.arc(32, 32, glowRadius, 0, Math.PI * 2);
+    const glowGradient = ctx.createRadialGradient(32, 32, 10, 32, 32, glowRadius);
+    glowGradient.addColorStop(0, "rgba(0, 200, 255, 0.3)");
+    glowGradient.addColorStop(1, "rgba(0, 200, 255, 0)");
+    ctx.fillStyle = glowGradient;
+    ctx.fill();
+
+    // --- No background fill (transparent) ---
+    // Removed the black background for transparency
+
+    // --- Neon gradient for I ---
+    const neonGradient = ctx.createLinearGradient(32, 10, 32, 50);
+    neonGradient.addColorStop(0, "#00f0ff");
+    neonGradient.addColorStop(0.5, "#00ccff");
+    neonGradient.addColorStop(1, "#0066ff");
+
+    ctx.font = "bold 42px Orbitron, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#00ccff";
+    ctx.fillStyle = neonGradient;
+    ctx.fillText("I", 32, 42);
+    ctx.shadowBlur = 0;
+
+    // --- Fire dot (flickering size) ---
+    const flameBase = 6 + Math.sin(flickerPhase * 0.3) * 1.5;
+    const dotX = 32;
+    const dotY = 20;
+
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, flameBase, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffaa00";
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#ff7700";
+    ctx.fill();
+
+    // --- Fire particles ---
+    particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.8, 0, Math.PI * 2);
+        const green = Math.floor(100 + Math.random() * 155);
+        const alpha = Math.random() * 0.8 + 0.2;
+        ctx.fillStyle = `rgba(255, ${green}, 0, ${alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#ffaa00";
+        ctx.fill();
+
+        // Movement with wiggle
+        p.y -= p.speed;
+        p.x += Math.sin(flickerPhase * 0.3 + Math.random() * 2) * 0.6;
+        if (p.y < dotY - 15) {
+            p.y = dotY;
+            p.x = dotX + (Math.random() * 10 - 5);
+        }
+    });
+
+    ctx.shadowBlur = 0;
+}
+
+function startFaviconAnimation() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+
+    const particles = Array.from({ length: 8 }, () => ({
+        x: 32 + (Math.random() * 8 - 4),
+        y: 20,
+        speed: 0.6 + Math.random() * 1
+    }));
+
+    let flickerPhase = 0;
+    let lastFrameTime = 0;
+    let isAnimating = true;
+    const frameRate = 15; // Limit to 15 FPS for favicon to reduce CPU usage
+    const frameInterval = 1000 / frameRate;
+
+    function animate(currentTime) {
+        // Pause animation when modal is open to save resources
+        if (!isAnimating || document.body.classList.contains('modal-open')) {
+            requestAnimationFrame(animate);
+            return;
+        }
+        
+        if (currentTime - lastFrameTime >= frameInterval) {
+            flickerPhase += 1;
+            drawLogoWithParticles(ctx, particles, flickerPhase);
+            document.getElementById("dynamic-favicon").href = canvas.toDataURL("image/png");
+            lastFrameTime = currentTime;
+        }
+        requestAnimationFrame(animate);
+    }
+
+    // Expose control functions globally
+    window.pauseFaviconAnimation = () => { isAnimating = false; };
+    window.resumeFaviconAnimation = () => { isAnimating = true; };
+
+    requestAnimationFrame(animate);
+}
+
+// Start animation
+startFaviconAnimation();
