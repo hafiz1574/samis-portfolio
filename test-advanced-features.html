@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Portfolio Features Test</title>
+    
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            cursor: none; /* Hide default cursor for custom cursor */
+        }
+
+        /* Custom Cursor */
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            mix-blend-mode: difference;
+            transition: all 0.1s ease;
+        }
+
+        .custom-cursor.hover {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        /* Interactive Particle Canvas */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Hero Section with Dynamic Background */
+        .hero-section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(0, 212, 255, 0.1) 0%, 
+                transparent 50%);
+            transition: background 0.3s ease;
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideInUp 1s ease 0.5s forwards;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideInUp 1s ease 1s forwards;
+        }
+
+        /* Scroll-triggered sections */
+        .scroll-section {
+            min-height: 100vh;
+            padding: 5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Stats Counter */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-10px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        /* Interactive Cards */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .interactive-card {
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+                rgba(0, 212, 255, 0.1) 0%, 
+                transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .interactive-card:hover::before {
+            opacity: 1;
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-20px) rotateX(5deg);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #00d4ff;
+        }
+
+        .card-description {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        /* Scroll Progress Bar */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #ff6b6b);
+            z-index: 10000;
+            transition: width 0.1s ease;
+        }
+
+        /* Easter Egg Button */
+        .easter-egg {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .easter-egg:hover {
+            transform: scale(1.2) rotate(360deg);
+            background: rgba(0, 212, 255, 0.3);
+        }
+
+        .easter-egg-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+
+        .easter-egg-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 3rem;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #00d4ff;
+            max-width: 500px;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* About Section - Revolutionary Design */
+        .about-section {
+            min-height: 100vh;
+            padding: 5rem 2rem;
+            position: relative;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(76, 205, 196, 0.1) 0%, transparent 50%);
+        }
+
+        .about-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Floating Elements Background */
+        .about-bg-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-shape {
+            position: absolute;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .floating-shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 30%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        /* Terminal Style Container */
+        .about-terminal {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .terminal-header {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff5f57;
+        }
+
+        .terminal-dot:nth-child(2) {
+            background: #ffbd2e;
+        }
+
+        .terminal-dot:nth-child(3) {
+            background: #28ca42;
+        }
+
+        .terminal-title {
+            margin-left: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .terminal-content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 3rem;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        /* Avatar Section */
+        .about-avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .avatar-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .avatar-frame {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.3), rgba(255, 107, 107, 0.2), rgba(76, 205, 196, 0.2));
+            padding: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .avatar-frame:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.4);
+        }
+
+        /* 3D Model Viewer */
+        .model-viewer {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(0, 212, 255, 0.1), rgba(0, 0, 0, 0.8));
+        }
+
+        .model-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            border-radius: 50%;
+            cursor: grab;
+        }
+
+        .model-canvas:active {
+            cursor: grabbing;
+        }
+
+        .model-fallback {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .model-fallback.hidden {
+            display: none;
+        }
+
+        .model-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00d4ff;
+            font-size: 0.9rem;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .model-loading .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .model-controls {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .model-btn {
+            padding: 0.3rem 0.6rem;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 15px;
+            color: #00d4ff;
+            font-size: 0.7rem;
+            cursor: none;
+            transition: all 0.3s ease;
+        }
+
+        .model-btn:hover {
+            background: rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: rgba(0, 212, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #00d4ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            background: #28ca42;
+            border-radius: 50%;
+            border: 3px solid rgba(0, 0, 0, 0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .avatar-info {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Courier New', monospace;
+        }
+
+        .avatar-name {
+            font-size: 1.2rem;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .avatar-role {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Code-like Content */
+        .about-code {
+            font-family: 'Courier New', monospace;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.8;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            opacity: 0;
+            animation: typewriter 0.5s ease forwards;
+        }
+
+        .code-line:nth-child(1) { animation-delay: 0.5s; }
+        .code-line:nth-child(2) { animation-delay: 1s; }
+        .code-line:nth-child(3) { animation-delay: 1.5s; }
+        .code-line:nth-child(4) { animation-delay: 2s; }
+        .code-line:nth-child(5) { animation-delay: 2.5s; }
+        .code-line:nth-child(6) { animation-delay: 3s; }
+
+        .line-number {
+            color: rgba(0, 212, 255, 0.6);
+            margin-right: 1rem;
+            min-width: 30px;
+        }
+
+        .code-keyword {
+            color: #ff6b6b;
+        }
+
+        .code-string {
+            color: #4ccdcc;
+        }
+
+        .code-variable {
+            color: #00d4ff;
+        }
+
+        .code-comment {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        /* Skills Grid */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .skill-item {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .skill-item:hover::before {
+            left: 100%;
+        }
+
+        .skill-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .skill-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: #00d4ff;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .skill-name {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        /* Animated Cursor */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #00d4ff;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        /* Animations */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes typewriter {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 3D Project Showcase */
+        .project-showcase {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+            background: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.05) 0%, transparent 70%);
+        }
+
+        .showcase-controls {
+            margin-bottom: 3rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .control-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 25px;
+            color: white;
+            cursor: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .control-btn.active {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 350px;
+            height: 250px;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: grab;
+        }
+
+        .carousel-container:active {
+            cursor: grabbing;
+        }
+
+        .project-card {
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            cursor: none;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(0, 212, 255, 0.1) 0%, 
+                rgba(255, 107, 107, 0.1) 50%, 
+                rgba(76, 205, 196, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .project-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .project-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
+        .tech-tag {
+            padding: 0.2rem 0.6rem;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: #00d4ff;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .tech-tag:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .project-features {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .feature {
+            display: inline-block;
+            background: rgba(116, 94, 192, 0.2);
+            color: #e74c3c;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(116, 94, 192, 0.3);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            background: rgba(116, 94, 192, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(116, 94, 192, 0.3);
+        }
+
+        .showcase-info {
+            margin-top: 3rem;
+            text-align: center;
+            max-width: 600px;
+            opacity: 0.7;
+        }
+
+        .drag-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .section-header {
+                font-size: 2rem;
+            }
+            
+            .stats-container,
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .carousel-container {
+                width: 280px;
+                height: 200px;
+            }
+
+            .project-card {
+                width: 250px;
+                height: 150px;
+                padding: 1rem;
+            }
+
+            .showcase-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .about-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .photo-frame {
+                width: 280px;
+                height: 280px;
+            }
+
+            .about-title {
+                font-size: 2rem;
+            }
+
+            .about-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .about-cta {
+                justify-content: center;
+            }
+
+            .terminal-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 1.5rem;
+            }
+
+            .avatar-frame {
+                width: 150px;
+                height: 150px;
+            }
+
+            .avatar-image {
+                font-size: 3rem;
+            }
+
+            .about-code {
+                font-size: 0.9rem;
+            }
+
+            .skills-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 0.8rem;
+            }
+
+            .floating-shape {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="custom-cursor"></div>
+    
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+    
+    <!-- Interactive Particle Canvas -->
+    <canvas id="particle-canvas"></canvas>
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Hafiz Al Sami Portfolio</h1>
+            <p class="hero-subtitle">Advanced Features • Real Projects • Interactive Experience</p>
+        </div>
+    </section>
+    
+    <!-- Stats Section with Scroll Animation -->
+    <section class="scroll-section">
+        <div class="stats-container scroll-reveal">
+            <div class="stat-item">
+                <span class="stat-number" data-target="150">0</span>
+                <span class="stat-label">Projects Completed</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="50">0</span>
+                <span class="stat-label">Happy Clients</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="3">0</span>
+                <span class="stat-label">Years Experience</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" data-target="24">0</span>
+                <span class="stat-label">Hours Support</span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Interactive Cards Section -->
+    <section class="scroll-section">
+        <div class="cards-container scroll-reveal">
+            <h2 class="section-header">Interactive Features</h2>
+            <div class="interactive-card">
+                <h3 class="card-title">Cursor-Interactive Particles</h3>
+                <p class="card-description">Move your mouse around to see particles respond to your cursor with realistic physics and smooth animations.</p>
+            </div>
+            <div class="interactive-card">
+                <h3 class="card-title">Scroll-Triggered Animations</h3>
+                <p class="card-description">Elements reveal themselves as you scroll, creating a narrative journey through the content.</p>
+            </div>
+            <div class="interactive-card">
+                <h3 class="card-title">Dynamic Backgrounds</h3>
+                <p class="card-description">Background gradients shift based on mouse position, creating an immersive experience.</p>
+            </div>
+            <div class="interactive-card">
+                <h3 class="card-title">3D Hover Effects</h3>
+                <p class="card-description">Cards transform in 3D space when hovered, with dynamic lighting effects.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="scroll-section about-section">
+        <!-- Floating Background Elements -->
+        <div class="about-bg-elements">
+            <div class="floating-shape"></div>
+            <div class="floating-shape"></div>
+            <div class="floating-shape"></div>
+        </div>
+
+        <div class="about-wrapper scroll-reveal">
+            <div class="about-terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                    </div>
+                    <div class="terminal-title">hafiz-al-sami@portfolio:~$ cat about.js</div>
+                </div>
+                
+                <div class="terminal-content">
+                    <div class="about-avatar-section">
+                        <div class="avatar-container">
+                            <div class="avatar-frame">
+                                <div class="model-viewer" id="modelViewer">
+                                    <div class="model-loading" id="modelLoading">
+                                        <div class="spinner"></div>
+                                        Loading 3D Model...
+                                    </div>
+                                    <div class="model-fallback" id="modelFallback">
+                                        <img src="images/Sami.jpg" alt="Hafiz Al Sami" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=&quot;display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 4rem; color: #00d4ff;&quot;>◉</div>';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    </div>
+                                </div>
+                                <div class="status-indicator"></div>
+                                <div class="model-controls">
+                                    <button class="model-btn" onclick="resetModelView()">Reset</button>
+                                    <button class="model-btn" onclick="toggleAutoRotate()">Auto Rotate</button>
+                                    <button class="model-btn" onclick="retryModelLoad()">Retry 3D</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="avatar-info">
+                            <div class="avatar-name">Hafiz Al Sami</div>
+                            <div class="avatar-role">Status: Available for work</div>
+                        </div>
+                        
+                        <div class="skills-grid">
+                            <div class="skill-item">
+                                <span class="skill-icon">⚛</span>
+                                <span class="skill-name">React</span>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-icon">🐍</span>
+                                <span class="skill-name">Python</span>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-icon">🔷</span>
+                                <span class="skill-name">Blender</span>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-icon">⬢</span>
+                                <span class="skill-name">Node.js</span>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-icon">🍃</span>
+                                <span class="skill-name">MongoDB</span>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-icon">𝗩</span>
+                                <span class="skill-name">Vue.js</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="about-code">
+                        <div class="code-line">
+                            <span class="line-number">01</span>
+                            <span class="code-keyword">const</span> 
+                            <span class="code-variable">developer</span> = {
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">02</span>
+                            &nbsp;&nbsp;<span class="code-variable">name</span>: <span class="code-string">"Hafiz Al Sami"</span>,
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">03</span>
+                            &nbsp;&nbsp;<span class="code-variable">role</span>: <span class="code-string">"Full-Stack Developer & 3D Artist"</span>,
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">04</span>
+                            &nbsp;&nbsp;<span class="code-variable">experience</span>: <span class="code-string">"3+ years"</span>,
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">05</span>
+                            &nbsp;&nbsp;<span class="code-variable">passion</span>: <span class="code-string">"Creating innovative digital experiences"</span>,
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">06</span>
+                            &nbsp;&nbsp;<span class="code-variable">skills</span>: [
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">07</span>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-string">"Web Development"</span>, <span class="code-string">"3D Modeling"</span>, <span class="code-string">"UI/UX Design"</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">08</span>
+                            &nbsp;&nbsp;],
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">09</span>
+                            &nbsp;&nbsp;<span class="code-variable">motto</span>: <span class="code-string">"Code with purpose, design with passion"</span>,
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">10</span>
+                            &nbsp;&nbsp;<span class="code-variable">currentFocus</span>: <span class="code-string">"Advanced web animations & 3D integration"</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">11</span>
+                            };<span class="typing-cursor"></span>
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">12</span>
+                        </div>
+                        <div class="code-line">
+                            <span class="line-number">13</span>
+                            <span class="code-comment">// Ready to bring your ideas to life!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D Project Showcase Section -->
+    <section class="scroll-section project-showcase">
+        <h2 class="section-header scroll-reveal">Hafiz Al Sami's Project Showcase</h2>
+        
+        <div class="showcase-controls scroll-reveal">
+            <button class="control-btn active" onclick="setCarouselMode('auto')">Auto Rotate</button>
+            <button class="control-btn" onclick="setCarouselMode('manual')">Manual Control</button>
+            <button class="control-btn" onclick="resetCarousel()">Reset View</button>
+        </div>
+
+        <div class="carousel-container scroll-reveal" id="projectCarousel">
+            <div class="project-card" data-project="0">
+                <h3 class="project-title">E-commerce Platform</h3>
+                <p class="project-description">Full-featured online store with payment processing and inventory management system.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">React</span>
+                    <span class="tech-tag">Node.js</span>
+                    <span class="tech-tag">MongoDB</span>
+                    <span class="tech-tag">Payment Gateway</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">🛒 Shopping Cart</span>
+                    <span class="feature">💳 Secure Payments</span>
+                    <span class="feature">📊 Admin Dashboard</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="1">
+                <h3 class="project-title">Mobile Fitness App</h3>
+                <p class="project-description">Cross-platform fitness tracking application with social features and real-time progress monitoring.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Flutter</span>
+                    <span class="tech-tag">Firebase</span>
+                    <span class="tech-tag">Dart</span>
+                    <span class="tech-tag">Push Notifications</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">📱 Cross-Platform</span>
+                    <span class="feature">👥 Social Features</span>
+                    <span class="feature">📈 Progress Tracking</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="2">
+                <h3 class="project-title">Data Analytics Dashboard</h3>
+                <p class="project-description">Real-time business intelligence dashboard with interactive visualizations and predictive analytics.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Vue.js</span>
+                    <span class="tech-tag">Python</span>
+                    <span class="tech-tag">D3.js</span>
+                    <span class="tech-tag">Machine Learning</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">📊 Interactive Charts</span>
+                    <span class="feature">⚡ Real-time Data</span>
+                    <span class="feature">🤖 Predictive Analytics</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="3">
+                <h3 class="project-title">3D Character Modeling</h3>
+                <p class="project-description">Photorealistic character model with advanced subsurface scattering and realistic materials.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Blender 4.0</span>
+                    <span class="tech-tag">Cycles Render</span>
+                    <span class="tech-tag">Sculpting</span>
+                    <span class="tech-tag">4K Textures</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">🎨 2.1M Polygons</span>
+                    <span class="feature">🖼️ 4K Render</span>
+                    <span class="feature">⏱️ 45 min Render</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="4">
+                <h3 class="project-title">Mechanical Animation</h3>
+                <p class="project-description">Complex mechanical animation with precise timing and realistic physics simulation at 60 FPS.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Blender</span>
+                    <span class="tech-tag">Eevee Engine</span>
+                    <span class="tech-tag">Physics Sim</span>
+                    <span class="tech-tag">4K UHD</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">⚙️ Complex Rigging</span>
+                    <span class="feature">🎬 60 FPS</span>
+                    <span class="feature">🔗 Motion Blur</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="5">
+                <h3 class="project-title">Particle VFX Simulation</h3>
+                <p class="project-description">Advanced particle system with fluid dynamics and volumetric rendering effects using Mantaflow.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Mantaflow</span>
+                    <span class="tech-tag">OpenVDB</span>
+                    <span class="tech-tag">Volumetrics</span>
+                    <span class="tech-tag">Compositing</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">💫 100K+ Particles</span>
+                    <span class="feature">🌊 Fluid Dynamics</span>
+                    <span class="feature">☁️ Volumetric Render</span>
+                </div>
+            </div>
+            
+            <div class="project-card" data-project="6">
+                <h3 class="project-title">Architectural Visualization</h3>
+                <p class="project-description">Professional architectural visualization with photorealistic lighting and material systems.</p>
+                <div class="project-tech">
+                    <span class="tech-tag">Blender</span>
+                    <span class="tech-tag">Cycles</span>
+                    <span class="tech-tag">HDRI Lighting</span>
+                    <span class="tech-tag">8K Render</span>
+                </div>
+                <div class="project-features">
+                    <span class="feature">🏗️ Photorealistic</span>
+                    <span class="feature">💡 HDRI Lighting</span>
+                    <span class="feature">🖼️ 8K Resolution</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="showcase-info scroll-reveal">
+            <p>Explore Hafiz Al Sami's diverse portfolio - from cutting-edge web applications to stunning 3D visualizations. Use the controls above or drag to rotate the carousel.</p>
+            <div class="drag-hint">
+                <span>🖱️</span>
+                <span>Drag to rotate • Hover to explore • 7 Real Projects</span>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Easter Egg -->
+    <div class="easter-egg" onclick="showEasterEgg()">
+        🎮
+    </div>
+    
+    <!-- Easter Egg Modal -->
+    <div class="easter-egg-modal" id="easterEggModal">
+        <div class="easter-egg-content">
+            <h3>🎉 Secret Unlocked!</h3>
+            <p>You found the hidden easter egg! This is how you can add surprise elements to engage visitors.</p>
+            <button onclick="hideEasterEgg()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #00d4ff; border: none; border-radius: 5px; color: white; cursor: pointer;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.custom-cursor');
+        const interactiveElements = document.querySelectorAll('.interactive-card, .easter-egg, button, .model-btn');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            
+            // Update CSS variables for background gradients
+            const heroSection = document.querySelector('.hero-section');
+            const mouseXPercent = (e.clientX / window.innerWidth) * 100;
+            const mouseYPercent = (e.clientY / window.innerHeight) * 100;
+            
+            heroSection.style.setProperty('--mouse-x', mouseXPercent + '%');
+            heroSection.style.setProperty('--mouse-y', mouseYPercent + '%');
+        });
+
+        // 3D Model Viewer
+        class ModelViewer {
+            constructor() {
+                this.container = document.getElementById('modelViewer');
+                this.loading = document.getElementById('modelLoading');
+                this.fallback = document.getElementById('modelFallback');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.model = null;
+                this.autoRotate = true;
+                this.animationId = null;
+                
+                this.init();
+                this.loadModel();
+            }
+
+            init() {
+                // Create scene
+                this.scene = new THREE.Scene();
+                
+                // Create camera
+                this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+                this.camera.position.set(0, 0, 3);
+                
+                // Create renderer
+                this.renderer = new THREE.WebGLRenderer({ 
+                    alpha: true, 
+                    antialias: true 
+                });
+                this.renderer.setSize(200, 200);
+                this.renderer.setClearColor(0x000000, 0);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
+                // Add canvas to container
+                const canvas = this.renderer.domElement;
+                canvas.className = 'model-canvas';
+                this.container.appendChild(canvas);
+                
+                // Create orbit controls
+                this.controls = new THREE.OrbitControls(this.camera, canvas);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enableZoom = false;
+                this.controls.enablePan = false;
+                this.controls.autoRotate = this.autoRotate;
+                this.controls.autoRotateSpeed = 2;
+                
+                // Add lights
+                this.addLights();
+                
+                // Start render loop
+                this.animate();
+            }
+
+            addLights() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x00d4ff, 0.4);
+                this.scene.add(ambientLight);
+                
+                // Directional light
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 5, 5);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+                
+                // Point light for accent
+                const pointLight = new THREE.PointLight(0xff6b6b, 0.3, 10);
+                pointLight.position.set(-2, 2, 2);
+                this.scene.add(pointLight);
+            }
+
+            loadModel() {
+                console.log('🔄 Starting GLB model load...');
+                console.log('📁 Looking for file: images/Sami.glb');
+                
+                // Check if GLTFLoader is available
+                if (typeof THREE === 'undefined') {
+                    console.error('❌ THREE.js not loaded!');
+                    this.onModelError(new Error('THREE.js library not loaded'));
+                    return;
+                }
+                
+                if (typeof THREE.GLTFLoader === 'undefined') {
+                    console.error('❌ GLTFLoader not available!');
+                    this.onModelError(new Error('GLTFLoader not loaded'));
+                    return;
+                }
+                
+                console.log('✅ THREE.js and GLTFLoader available');
+                
+                const loader = new THREE.GLTFLoader();
+                
+                // Set a longer timeout - GLB files can be large
+                const loadingTimeout = setTimeout(() => {
+                    console.error('⏰ GLB loading timeout after 30 seconds');
+                    this.onModelError(new Error('Loading timeout - GLB file may be too large or corrupted'));
+                }, 30000); // 30 second timeout
+                
+                // Try to load GLB model
+                loader.load(
+                    'images/Sami.glb',
+                    (gltf) => {
+                        clearTimeout(loadingTimeout);
+                        console.log('🎉 GLB loaded successfully!', gltf);
+                        this.onModelLoaded(gltf.scene);
+                    },
+                    (progress) => {
+                        if (progress.total > 0) {
+                            const percent = (progress.loaded / progress.total * 100).toFixed(1);
+                            console.log(`📊 Loading progress: ${percent}% (${progress.loaded}/${progress.total} bytes)`);
+                        }
+                    },
+                    (error) => {
+                        clearTimeout(loadingTimeout);
+                        console.error('💥 GLB loading failed:', error);
+                        this.onModelError(error);
+                    }
+                );
+            }
+
+            onModelLoaded(object) {
+                this.model = object;
+                
+                // Scale and position the model
+                const box = new THREE.Box3().setFromObject(object);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
+                // Center the model
+                object.position.sub(center);
+                
+                // Scale to fit
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 2 / maxDim;
+                object.scale.setScalar(scale);
+                
+                // Add materials if needed
+                object.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        
+                        // Enhance materials
+                        if (child.material) {
+                            child.material.transparent = true;
+                            child.material.opacity = 0.9;
+                        }
+                    }
+                });
+                
+                this.scene.add(object);
+                
+                // Hide loading, show model
+                this.loading.style.display = 'none';
+                this.fallback.classList.add('hidden');
+                
+                console.log('3D Model loaded successfully!');
+            }
+
+            onModelError(error) {
+                console.error('Error loading 3D model:', error);
+                
+                // Hide loading and canvas
+                this.loading.style.display = 'none';
+                const canvas = this.container.querySelector('.model-canvas');
+                if (canvas) {
+                    canvas.style.display = 'none';
+                }
+                
+                // Show your actual image as fallback instead of error message
+                this.fallback.innerHTML = `
+                    <img src="images/Sami.jpg" alt="Hafiz Al Sami" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                         onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=&quot;display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 4rem; color: #00d4ff;&quot;>👤</div>';">
+                `;
+                this.fallback.classList.remove('hidden');
+                
+                // Log the error details for debugging
+                console.warn('3D Model failed to load. Common issues:');
+                console.warn('1. GLB file may be corrupted or invalid');
+                console.warn('2. File size too large (>10MB)');
+                console.warn('3. CORS issues - try using local server');
+                console.warn('4. GLTFLoader script failed to load');
+                console.warn('Error details:', error);
+            }
+
+            animate() {
+                this.animationId = requestAnimationFrame(() => this.animate());
+                
+                if (this.controls) {
+                    this.controls.update();
+                }
+                
+                if (this.renderer && this.scene && this.camera) {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+
+            resetView() {
+                if (this.controls) {
+                    this.controls.reset();
+                }
+                if (this.camera) {
+                    this.camera.position.set(0, 0, 3);
+                }
+            }
+
+            toggleAutoRotate() {
+                if (this.controls) {
+                    this.autoRotate = !this.autoRotate;
+                    this.controls.autoRotate = this.autoRotate;
+                }
+            }
+
+            dispose() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                if (this.renderer) {
+                    this.renderer.dispose();
+                }
+            }
+        }
+
+        // Initialize 3D Model Viewer
+        let modelViewer;
+        
+        // Global functions for model controls
+        window.resetModelView = function() {
+            if (modelViewer) {
+                modelViewer.resetView();
+            }
+        };
+
+        window.toggleAutoRotate = function() {
+            if (modelViewer) {
+                modelViewer.toggleAutoRotate();
+            }
+        };
+
+        window.retryModelLoad = function() {
+            console.log('🔄 Manual retry requested');
+            if (modelViewer) {
+                // Reset loading state
+                const loading = document.getElementById('modelLoading');
+                const fallback = document.getElementById('modelFallback');
+                loading.style.display = 'block';
+                fallback.classList.add('hidden');
+                
+                // Try loading again
+                modelViewer.loadModel();
+            }
+        };
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            
+            // Update CSS variables for background gradients
+            const heroSection = document.querySelector('.hero-section');
+            const mouseXPercent = (e.clientX / window.innerWidth) * 100;
+            const mouseYPercent = (e.clientY / window.innerHeight) * 100;
+            
+            heroSection.style.setProperty('--mouse-x', mouseXPercent + '%');
+            heroSection.style.setProperty('--mouse-y', mouseYPercent + '%');
+        });
+
+        // Cursor hover effects
+        interactiveElements.forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                cursor.classList.add('hover');
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                cursor.classList.remove('hover');
+            });
+        });
+
+        // Interactive Particle System
+        class InteractiveParticles {
+            constructor() {
+                this.canvas = document.getElementById('particle-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.mouse = { x: 0, y: 0 };
+                this.resize();
+                this.init();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            
+            init() {
+                this.particles = [];
+                const numParticles = Math.floor((this.canvas.width * this.canvas.height) / 15000);
+                
+                for (let i = 0; i < numParticles; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 3 + 1,
+                        opacity: Math.random() * 0.8 + 0.2,
+                        originalSize: Math.random() * 3 + 1
+                    });
+                }
+            }
+            
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.particles.forEach(particle => {
+                    // Mouse interaction
+                    const dx = this.mouse.x - particle.x;
+                    const dy = this.mouse.y - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const maxDistance = 150;
+                    
+                    if (distance < maxDistance) {
+                        const force = (maxDistance - distance) / maxDistance;
+                        const angle = Math.atan2(dy, dx);
+                        particle.vx -= Math.cos(angle) * force * 0.5;
+                        particle.vy -= Math.sin(angle) * force * 0.5;
+                        particle.size = particle.originalSize + force * 5;
+                        particle.opacity = Math.min(1, particle.opacity + force);
+                    } else {
+                        particle.size += (particle.originalSize - particle.size) * 0.1;
+                        particle.opacity += (0.5 - particle.opacity) * 0.1;
+                    }
+                    
+                    // Update position
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    
+                    // Friction
+                    particle.vx *= 0.99;
+                    particle.vy *= 0.99;
+                    
+                    // Boundary check
+                    if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+                    if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+                    
+                    // Keep particles in bounds
+                    particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
+                    particle.y = Math.max(0, Math.min(this.canvas.height, particle.y));
+                    
+                    // Draw particle
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.opacity;
+                    this.ctx.fillStyle = `hsl(${190 + Math.sin(Date.now() * 0.001 + particle.x * 0.01) * 30}, 70%, 60%)`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    // Glow effect
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = `hsl(${190 + Math.sin(Date.now() * 0.001 + particle.x * 0.01) * 30}, 70%, 60%)`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size * 0.5, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+                
+                // Draw connections
+                this.drawConnections();
+                
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            drawConnections() {
+                this.particles.forEach((particle, i) => {
+                    this.particles.slice(i + 1).forEach(otherParticle => {
+                        const dx = particle.x - otherParticle.x;
+                        const dy = particle.y - otherParticle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) {
+                            this.ctx.save();
+                            this.ctx.globalAlpha = (100 - distance) / 100 * 0.3;
+                            this.ctx.strokeStyle = '#00d4ff';
+                            this.ctx.lineWidth = 1;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(particle.x, particle.y);
+                            this.ctx.lineTo(otherParticle.x, otherParticle.y);
+                            this.ctx.stroke();
+                            this.ctx.restore();
+                        }
+                    });
+                });
+            }
+        }
+
+        // Initialize particles
+        new InteractiveParticles();
+
+        // Scroll-triggered animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    
+                    // Animate stats if this is the stats container
+                    if (entry.target.classList.contains('stats-container')) {
+                        animateStats();
+                    }
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.scroll-reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Stats counter animation
+        function animateStats() {
+            document.querySelectorAll('.stat-number').forEach(stat => {
+                const target = parseInt(stat.dataset.target);
+                const duration = 2000;
+                const start = Date.now();
+                const startValue = 0;
+
+                function updateStat() {
+                    const now = Date.now();
+                    const progress = Math.min((now - start) / duration, 1);
+                    const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                    const current = Math.floor(startValue + (target - startValue) * easeProgress);
+                    
+                    stat.textContent = current;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(updateStat);
+                    }
+                }
+                
+                updateStat();
+            });
+        }
+
+        // Scroll progress bar
+        window.addEventListener('scroll', () => {
+            const scrollProgress = document.querySelector('.scroll-progress');
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            
+            scrollProgress.style.width = scrollPercent + '%';
+        });
+
+        // Card mouse tracking
+        document.querySelectorAll('.interactive-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                card.style.setProperty('--mouse-x', x + '%');
+                card.style.setProperty('--mouse-y', y + '%');
+            });
+        });
+
+        // Easter egg functions
+        function showEasterEgg() {
+            document.getElementById('easterEggModal').style.display = 'flex';
+        }
+
+        function hideEasterEgg() {
+            document.getElementById('easterEggModal').style.display = 'none';
+        }
+
+        // Close easter egg on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideEasterEgg();
+            }
+        });
+
+        // Add some floating animations to elements
+        document.querySelectorAll('.stat-item').forEach((item, index) => {
+            item.style.animation = `float 3s ease-in-out infinite ${index * 0.5}s`;
+        });
+
+        // 3D Project Showcase
+        class ProjectShowcase {
+            constructor() {
+                this.carousel = document.getElementById('projectCarousel');
+                this.cards = document.querySelectorAll('.project-card');
+                this.currentRotation = 0;
+                this.targetRotation = 0;
+                this.isDragging = false;
+                this.startX = 0;
+                this.startRotation = 0;
+                this.autoRotate = true;
+                this.autoRotateSpeed = 0.5;
+                this.animationId = null;
+                
+                this.init();
+            }
+
+            init() {
+                this.positionCards();
+                this.addEventListeners();
+                this.startAutoRotation();
+                this.animate();
+            }
+
+            positionCards() {
+                const totalCards = this.cards.length;
+                const angleStep = 360 / totalCards;
+                const radius = 300;
+
+                this.cards.forEach((card, index) => {
+                    const angle = (angleStep * index) * Math.PI / 180;
+                    const x = Math.sin(angle) * radius;
+                    const z = Math.cos(angle) * radius;
+                    
+                    card.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${angleStep * index}deg)`;
+                });
+            }
+
+            addEventListeners() {
+                // Mouse events
+                this.carousel.addEventListener('mousedown', this.onMouseDown.bind(this));
+                document.addEventListener('mousemove', this.onMouseMove.bind(this));
+                document.addEventListener('mouseup', this.onMouseUp.bind(this));
+
+                // Touch events for mobile
+                this.carousel.addEventListener('touchstart', this.onTouchStart.bind(this));
+                document.addEventListener('touchmove', this.onTouchMove.bind(this));
+                document.addEventListener('touchend', this.onTouchEnd.bind(this));
+
+                // Prevent context menu on right click
+                this.carousel.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                // Card hover effects
+                this.cards.forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        if (!this.isDragging) {
+                            card.style.transform += ' scale(1.1) translateY(-20px)';
+                            card.style.zIndex = '10';
+                        }
+                    });
+
+                    card.addEventListener('mouseleave', () => {
+                        if (!this.isDragging) {
+                            this.positionCards();
+                            card.style.zIndex = '1';
+                        }
+                    });
+                });
+            }
+
+            onMouseDown(e) {
+                this.isDragging = true;
+                this.startX = e.clientX;
+                this.startRotation = this.targetRotation;
+                this.carousel.style.cursor = 'grabbing';
+                this.stopAutoRotation();
+            }
+
+            onMouseMove(e) {
+                if (!this.isDragging) return;
+
+                const deltaX = e.clientX - this.startX;
+                const rotationDelta = deltaX * 0.5; // Sensitivity
+                this.targetRotation = this.startRotation + rotationDelta;
+            }
+
+            onMouseUp() {
+                this.isDragging = false;
+                this.carousel.style.cursor = 'grab';
+            }
+
+            onTouchStart(e) {
+                this.onMouseDown({ clientX: e.touches[0].clientX });
+            }
+
+            onTouchMove(e) {
+                e.preventDefault();
+                this.onMouseMove({ clientX: e.touches[0].clientX });
+            }
+
+            onTouchEnd() {
+                this.onMouseUp();
+            }
+
+            startAutoRotation() {
+                if (this.autoRotate) {
+                    this.autoRotateInterval = setInterval(() => {
+                        if (!this.isDragging) {
+                            this.targetRotation += this.autoRotateSpeed;
+                        }
+                    }, 16);
+                }
+            }
+
+            stopAutoRotation() {
+                if (this.autoRotateInterval) {
+                    clearInterval(this.autoRotateInterval);
+                    this.autoRotateInterval = null;
+                }
+            }
+
+            setMode(mode) {
+                if (mode === 'auto') {
+                    this.autoRotate = true;
+                    this.startAutoRotation();
+                } else {
+                    this.autoRotate = false;
+                    this.stopAutoRotation();
+                }
+            }
+
+            reset() {
+                this.targetRotation = 0;
+                this.currentRotation = 0;
+            }
+
+            animate() {
+                // Smooth rotation interpolation
+                const rotationDiff = this.targetRotation - this.currentRotation;
+                this.currentRotation += rotationDiff * 0.1;
+
+                // Apply rotation to carousel
+                this.carousel.style.transform = `rotateY(${this.currentRotation}deg)`;
+
+                this.animationId = requestAnimationFrame(this.animate.bind(this));
+            }
+        }
+
+        // Initialize Project Showcase
+        let projectShowcase;
+        
+        // Initialize Model Viewer when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    modelViewer = new ModelViewer();
+                    projectShowcase = new ProjectShowcase();
+                }, 1000); // Delay to let other elements load first
+            });
+        } else {
+            setTimeout(() => {
+                modelViewer = new ModelViewer();
+                projectShowcase = new ProjectShowcase();
+            }, 1000);
+        }
+
+        // Global functions for showcase controls
+        window.setCarouselMode = function(mode) {
+            projectShowcase.setMode(mode);
+            
+            // Update button states
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        };
+
+        window.resetCarousel = function() {
+            projectShowcase.reset();
+        };
+    </script>
+</body>
+</html>

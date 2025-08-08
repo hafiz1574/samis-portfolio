@@ -104,7 +104,7 @@ window.projectData = {
     initEmailJS(); // Initialize email functionality
     
     // Initialize randomized particles
-    initRandomizedParticles();
+    // initRandomizedParticles(); // DISABLED FOR PERFORMANCE
     
     // Initialize Blender 3D Showcase with delay for smooth loading
     setTimeout(() => {
@@ -876,48 +876,44 @@ function initScrollNavbar() {
     
     let lastScrollTop = 0;
     let isScrolling = false;
+    let ticking = false; // Throttle scroll events
     
     function handleScroll() {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      
-      // Prevent negative values on iOS
-      if (scrollTop < 0) return;
-      
-      console.log(`Scroll: ${scrollTop}, Last: ${lastScrollTop}`);
-      
-      // At the top of the page - always show
-      if (scrollTop <= 50) {
-        navbar.style.transform = 'translateY(0)';
-        navbar.classList.remove('navbar-hidden');
-        navbar.classList.add('navbar-visible');
-        console.log('Top of page - show navbar');
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          
+          // Prevent negative values on iOS
+          if (scrollTop < 0) return;
+          
+          // At the top of the page - always show
+          if (scrollTop <= 50) {
+            navbar.style.transform = 'translateY(0)';
+            navbar.classList.remove('navbar-hidden');
+            navbar.classList.add('navbar-visible');
+          }
+          // Scrolling down - hide navbar  
+          else if (scrollTop > lastScrollTop && scrollTop > 100) {
+            navbar.style.transform = 'translateY(-100%)';
+            navbar.classList.add('navbar-hidden');
+            navbar.classList.remove('navbar-visible');
+          }
+          // Scrolling up - show navbar
+          else if (scrollTop < lastScrollTop) {
+            navbar.style.transform = 'translateY(0)';
+            navbar.classList.remove('navbar-hidden');
+            navbar.classList.add('navbar-visible');
+          }
+          
+          lastScrollTop = scrollTop;
+          ticking = false;
+        });
+        ticking = true;
       }
-      // Scrolling down - hide navbar  
-      else if (scrollTop > lastScrollTop && scrollTop > 100) {
-        navbar.style.transform = 'translateY(-100%)';
-        navbar.classList.add('navbar-hidden');
-        navbar.classList.remove('navbar-visible');
-        console.log('Scrolling down - hide navbar');
-      }
-      // Scrolling up - show navbar
-      else if (scrollTop < lastScrollTop) {
-        navbar.style.transform = 'translateY(0)';
-        navbar.classList.remove('navbar-hidden');
-        navbar.classList.add('navbar-visible');
-        console.log('Scrolling up - show navbar');
-      }
-      
-      lastScrollTop = scrollTop;
-      isScrolling = false;
     }
     
-    // Use both scroll event and requestAnimationFrame for smooth performance
-    window.addEventListener('scroll', () => {
-      if (!isScrolling) {
-        requestAnimationFrame(handleScroll);
-        isScrolling = true;
-      }
-    }, { passive: true });
+    // Throttled scroll event for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Initialize navbar as visible
     navbar.style.transform = 'translateY(0)';
@@ -934,50 +930,40 @@ function initStickyLogo() {
   const heroSection = document.getElementById('home');
   const navbar = document.querySelector('.navbar');
   
-  if (!stickyLogo) {
-    console.error('Sticky logo not found!');
+  if (!stickyLogo || !heroSection || !navbar) {
+    console.error('Required elements not found for sticky logo');
     return;
   }
   
-  if (!heroSection) {
-    console.error('Hero section not found!');
-    return;
-  }
-  
-  if (!navbar) {
-    console.error('Navbar not found!');
-    return;
-  }
+  let ticking = false; // Throttle scroll events
   
   function handleStickyLogoVisibility() {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const heroHeight = heroSection.offsetHeight;
-    const navbarHidden = navbar.classList.contains('navbar-hidden');
-    
-    // Show sticky logo when:
-    // 1. Hero section is mostly out of view (scrolled past 80% of hero height)
-    // 2. AND navbar is hidden (scrolling down)
-    const heroOutOfView = scrollTop > (heroHeight * 0.8);
-    const shouldShow = heroOutOfView && navbarHidden;
-    
-    console.log(`Sticky Logo - Scroll: ${scrollTop}, Hero Height: ${heroHeight}, Hero Out: ${heroOutOfView}, Navbar Hidden: ${navbarHidden}, Should Show: ${shouldShow}`);
-    
-    if (shouldShow) {
-      stickyLogo.classList.add('show');
-    } else {
-      stickyLogo.classList.remove('show');
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const heroHeight = heroSection.offsetHeight;
+        const navbarHidden = navbar.classList.contains('navbar-hidden');
+        
+        // Show sticky logo when:
+        // 1. Hero section is mostly out of view (scrolled past 80% of hero height)
+        // 2. AND navbar is hidden (scrolling down)
+        const heroOutOfView = scrollTop > (heroHeight * 0.8);
+        const shouldShow = heroOutOfView && navbarHidden;
+        
+        if (shouldShow) {
+          stickyLogo.classList.add('show');
+        } else {
+          stickyLogo.classList.remove('show');
+        }
+        
+        ticking = false;
+      });
+      ticking = true;
     }
   }
   
-  // Listen for scroll events
-  let isScrolling = false;
-  window.addEventListener('scroll', () => {
-    if (!isScrolling) {
-      requestAnimationFrame(handleStickyLogoVisibility);
-      isScrolling = true;
-      setTimeout(() => { isScrolling = false; }, 16); // 60fps throttle
-    }
-  }, { passive: true });
+  // Throttled scroll events for better performance
+  window.addEventListener('scroll', handleStickyLogoVisibility, { passive: true });
   
   // Add click event to scroll to top smoothly
   stickyLogo.addEventListener('click', () => {
@@ -1034,7 +1020,7 @@ class SectionManager {
         });
         ticking = true;
       }
-    });
+    }, { passive: true });
   }
 
   checkSectionsOnScroll() {
@@ -1094,18 +1080,26 @@ class SectionManager {
   }
 
   setupHeroScroll() {
+    let ticking = false;
+    
     window.addEventListener('scroll', () => {
-      const scrollY = window.pageYOffset;
-      const windowHeight = window.innerHeight;
-      
-      if (this.header) {
-        if (scrollY > windowHeight * 0.15) {
-          this.header.classList.add('scroll-hide');
-        } else {
-          this.header.classList.remove('scroll-hide');
-        }
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.pageYOffset;
+          const windowHeight = window.innerHeight;
+          
+          if (this.header) {
+            if (scrollY > windowHeight * 0.15) {
+              this.header.classList.add('scroll-hide');
+            } else {
+              this.header.classList.remove('scroll-hide');
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
-    });
+    }, { passive: true });
   }
 
   animateServiceCards() {
@@ -1598,6 +1592,11 @@ class Blender3DShowcase {
   }
 
   setupParticleSystem() {
+    // DISABLED FOR PERFORMANCE: Complex particle system was causing lag
+    console.log('Particle system disabled for better performance');
+    return;
+    
+    /* DISABLED: Original heavy particle system
     // Create ambient particle system for the entire section
     const blenderSection = document.getElementById('blender-projects');
     if (!blenderSection) return;
@@ -1627,6 +1626,7 @@ class Blender3DShowcase {
     setInterval(() => {
       this.createAmbientParticle(particleContainer);
     }, 3000);
+    */
   }
 
   createAmbientParticle(container) {
@@ -1703,47 +1703,19 @@ class Blender3DShowcase {
   }
 
   activateCTAEffects() {
-    // Create orbital particles around button
-    const btnRect = this.ctaButton.getBoundingClientRect();
-    
-    for (let i = 0; i < 8; i++) {
-      setTimeout(() => {
-        this.createOrbitalParticle(this.ctaButton, i);
-      }, i * 100);
-    }
+    // SIMPLIFIED FOR PERFORMANCE: Reduced complex orbital particle effects
+    this.ctaButton.style.transform = 'scale(1.05)';
+    this.ctaButton.style.boxShadow = '0 8px 25px rgba(0, 212, 255, 0.3)';
   }
 
   createOrbitalParticle(button, index) {
-    const particle = document.createElement('div');
-    const angle = (index / 8) * 360;
-    
-    particle.style.cssText = `
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: var(--primary-color);
-      border-radius: 50%;
-      left: 50%;
-      top: 50%;
-      transform-origin: 0 40px;
-      transform: translate(-50%, -50%) rotate(${angle}deg);
-      animation: orbitalRotate 2s linear infinite;
-      box-shadow: 0 0 10px var(--primary-color);
-      z-index: -1;
-    `;
-
-    button.style.position = 'relative';
-    button.appendChild(particle);
-
-    setTimeout(() => {
-      if (particle.parentNode) {
-        particle.parentNode.removeChild(particle);
-      }
-    }, 2000);
+    // DISABLED FOR PERFORMANCE: Complex orbital particles caused lag
+    return;
   }
 
   deactivateCTAEffects() {
-    // Effects automatically cleanup after timeout
+    this.ctaButton.style.transform = 'scale(1)';
+    this.ctaButton.style.boxShadow = '';
   }
 
   setupScrollAnimations() {
