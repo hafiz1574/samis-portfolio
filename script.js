@@ -127,6 +127,8 @@ window.projectData = {
     setTimeout(() => {
       initModalSystemLate();
     }, 1000);
+
+  // country details are now provided directly in HTML
     
     // NOTE: Removed automatic scroll to top - was causing modal scroll issues
     // The initial scroll to top on page load (lines 3-5) is sufficient
@@ -193,6 +195,9 @@ function initTypingEffect() {
 
   setTimeout(type, 1000);
 }
+
+// Country details injector
+// injectCountryDetails removed; country details moved to static HTML
 
 // Early modal system initialization to prevent conflicts - DISABLED
 function initModalSystem() {
