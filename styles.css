@@ -17,6 +17,7 @@
 .countries-section { padding: 4rem 1rem; background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent); }
 .countries-section .section-title { margin-bottom: 0.25rem; }
 .countries-section p { margin-bottom: 1.25rem; color: rgba(255,255,255,0.7); }
+.countries-section .icon-plane { margin-left: 0.5rem; font-size: 1.05rem; display:inline-block; transform: translateY(-1px); }
 .countries-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: stretch; }
 .country-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 1rem; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:140px; box-shadow: 0 6px 18px rgba(2,6,10,0.45); }
 .flag-wrap { width:100%; display:flex; align-items:center; justify-content:center; padding: .25rem 0; }
