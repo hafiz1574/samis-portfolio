@@ -97,6 +97,18 @@ window.projectData = {
     
     // Use original SectionManager (no conflicts) - RE-ENABLED WITH MODAL FIXES
     new SectionManager();
+
+  // Immediate visibility fallback: ensure all sections are shown (prevents hidden content if observer fails)
+  document.querySelectorAll('section').forEach(sec => sec.classList.add('visible'));
+
+    // Secondary fallback: after 1500ms, if any section still hidden, force global fallback class
+    setTimeout(() => {
+      const hiddenSections = Array.from(document.querySelectorAll('section')).filter(s => !s.classList.contains('visible'));
+      if (hiddenSections.length) {
+        document.body.classList.add('loaded-fallback');
+        hiddenSections.forEach(s => s.classList.add('visible'));
+      }
+    }, 1500);
     
     initProjectModals();
     initFloatingTextAnimation();
@@ -120,6 +132,11 @@ window.projectData = {
     // The initial scroll to top on page load (lines 3-5) is sufficient
   }, 1000);
 });
+
+const DEBUG_LOGS = false; // Set true for debugging
+const PERF_MODE = true;  // Performance mode flag
+
+function perfLog(...args){ if(DEBUG_LOGS) console.log(...args); }
 
 function initTypingEffect() {
   const element = document.getElementById('typed-text');
@@ -168,6 +185,8 @@ function initTypingEffect() {
       phraseIndex = (phraseIndex + 1) % phrases.length;
       typeSpeed = 500;
     }
+
+    if(PERF_MODE) typeSpeed *= 1.3; // slower when perf mode
 
     setTimeout(type, typeSpeed);
   }
@@ -1447,6 +1466,15 @@ class Blender3DShowcase {
   }
 
   update3DRotation(e, project) {
+    if (PERF_MODE) {
+      // Throttled simple hover lift only
+      if(!project._perfHoverApplied){
+        project.style.transform = 'translateY(-8px) scale(1.01)';
+        project._perfHoverApplied = true;
+      }
+      return; // Skip expensive per-frame rotations
+    }
+    
     const rect = project.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -1475,6 +1503,8 @@ class Blender3DShowcase {
   }
 
   createRippleEffect(e, project) {
+    if (PERF_MODE) return; // Disable ripple in performance mode
+    
     const ripple = document.createElement('div');
     const rect = project.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
@@ -1557,6 +1587,8 @@ class Blender3DShowcase {
   }
 
   highlightToolTag(tag) {
+    if (PERF_MODE) return; // Skip particle bursts
+    
     // Create particle burst effect
     for (let i = 0; i < 5; i++) {
       setTimeout(() => {
@@ -1592,6 +1624,8 @@ class Blender3DShowcase {
   }
 
   setupParticleSystem() {
+    if (PERF_MODE) { perfLog('Blender particles disabled (PERF_MODE)'); return; }
+    
     // DISABLED FOR PERFORMANCE: Complex particle system was causing lag
     console.log('Particle system disabled for better performance');
     return;
@@ -1703,6 +1737,11 @@ class Blender3DShowcase {
   }
 
   activateCTAEffects() {
+    if (PERF_MODE){
+      this.ctaButton.style.transform='scale(1.03)';
+      return;
+    }
+    
     // SIMPLIFIED FOR PERFORMANCE: Reduced complex orbital particle effects
     this.ctaButton.style.transform = 'scale(1.05)';
     this.ctaButton.style.boxShadow = '0 8px 25px rgba(0, 212, 255, 0.3)';
@@ -2352,6 +2391,7 @@ function initMobileMenu() {
   const hamburger = document.getElementById('hamburger');
   const navMenu = document.getElementById('nav-menu');
   const navLinks = document.querySelectorAll('.nav-link');
+  const navOverlay = document.getElementById('nav-overlay');
   
   if (!hamburger || !navMenu) return;
   
@@ -2359,12 +2399,28 @@ function initMobileMenu() {
   hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('active');
     navMenu.classList.toggle('active');
-    
-    // Prevent body scroll when menu is open
+    const expanded = hamburger.classList.contains('active');
+    hamburger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    // Ensure navbar not translating while menu open
+    if (expanded) {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) navbar.style.transform = 'none';
+    }
+    if (navOverlay) { 
+      if (expanded) {
+        navOverlay.hidden = false;
+        requestAnimationFrame(() => navOverlay.classList.add('active'));
+      } else {
+        navOverlay.classList.remove('active');
+        setTimeout(() => { if(!expanded) navOverlay.hidden = true; }, 300);
+      }
+    }    // Prevent body scroll when menu is open
     if (navMenu.classList.contains('active')) {
       document.body.style.overflow = 'hidden';
+  document.body.classList.add('menu-open');
     } else {
       document.body.style.overflow = '';
+  document.body.classList.remove('menu-open');
     }
   });
   
@@ -2373,7 +2429,13 @@ function initMobileMenu() {
     link.addEventListener('click', () => {
       hamburger.classList.remove('active');
       navMenu.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      if (navOverlay) {
+        navOverlay.classList.remove('active');
+        setTimeout(() => navOverlay.hidden = true, 300);
+      }
       document.body.style.overflow = '';
+      document.body.classList.remove('menu-open');
     });
   });
   
@@ -2382,7 +2444,13 @@ function initMobileMenu() {
     if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
       hamburger.classList.remove('active');
       navMenu.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      if (navOverlay) {
+        navOverlay.classList.remove('active');
+        setTimeout(() => navOverlay.hidden = true, 300);
+      }
       document.body.style.overflow = '';
+      document.body.classList.remove('menu-open');
     }
   });
   
@@ -2391,7 +2459,13 @@ function initMobileMenu() {
     if (e.key === 'Escape' && navMenu.classList.contains('active')) {
       hamburger.classList.remove('active');
       navMenu.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      if (navOverlay) {
+        navOverlay.classList.remove('active');
+        setTimeout(() => navOverlay.hidden = true, 300);
+      }
       document.body.style.overflow = '';
+      document.body.classList.remove('menu-open');
     }
   });
 }
