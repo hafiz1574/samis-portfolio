@@ -114,6 +114,21 @@ window.projectData = {
     initFloatingTextAnimation();
     initEnhancedInputs();
     initEmailJS(); // Initialize email functionality
+
+    // Videos toggle: show only first 4 by default, allow expanding
+    const videosToggle = document.getElementById('videos-toggle');
+    const videosGrid = document.querySelector('.videos-grid');
+    if (videosToggle && videosGrid) {
+      videosToggle.addEventListener('click', () => {
+        const expanded = videosGrid.classList.toggle('collapsed') ? false : true;
+        // If class 'collapsed' is present, we are collapsed; invert for aria
+        const isExpanded = !videosGrid.classList.contains('collapsed');
+        videosToggle.setAttribute('aria-expanded', String(isExpanded));
+        videosToggle.textContent = isExpanded ? 'Show less' : 'Show more';
+      });
+      // Start collapsed: ensure class present
+      videosGrid.classList.add('collapsed');
+    }
     
     // Initialize randomized particles
     // initRandomizedParticles(); // DISABLED FOR PERFORMANCE

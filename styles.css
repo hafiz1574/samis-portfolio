@@ -28,7 +28,25 @@
   position: static !important;
 }
 .countries-section::before { display: none !important; }
-.countries-section .section-title { margin-bottom: 0.25rem; }
+.countries-section .section-title {
+  margin-bottom: 0.25rem;
+ /* font-size: clamp(2.2rem, 4.8vw, 3.4rem);
+  font-weight: 700;
+  background: linear-gradient(90deg, #00f0ff 0%, #7af2c6 45%, #ffd36b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 6px 18px rgba(0, 240, 255, 0.06); subtle glow */
+}
+.countries-section > .container > p.font-body {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-top: 0.5rem;
+  text-align: center;
+  text-shadow: 0 6px 18px rgba(0,212,255,0.06);
+  /* Make paragraph size similar to h3 */
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem); /* responsive h3-ish size */
+}
 .countries-section p { margin-bottom: 1.25rem; color: rgba(255,255,255,0.7); }
 .countries-section .icon-plane { margin-left: 0.65rem; display:inline-flex; align-items:center; transform: translateY(-3px); }
 .countries-section .icon-plane img { width:70px; height:70px; display:block; filter: drop-shadow(0 8px 18px rgba(0,120,200,0.08)); }
@@ -112,6 +130,52 @@
 .country-details li::before { content: '\2022'; position: absolute; left: 0; top: 0; color: var(--primary-color); font-weight:700; }
 
 @media (max-width: 480px) { .country-details li { font-size: 0.92rem; } }
+
+/* Video Gallery (4x4) styles */
+.video-gallery .section-title { margin-bottom: 0.25rem; }
+.video-gallery > .container > p.font-body { color: var(--primary-color); font-weight:600; margin-top:0.5rem; text-align:center; }
+.video-gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-top: 1rem; }
+.gallery-card { display: block; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.02); text-decoration: none; color: inherit; }
+.gallery-card .thumb { width: 100%; padding-top: 56.25%; background-size: cover; background-position: center; }
+.gallery-caption { padding: 0.6rem 0.75rem; font-weight:600; text-align:center; }
+
+@media (max-width: 1100px) { .video-gallery-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .video-gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .video-gallery-grid { grid-template-columns: 1fr; } }
+
+/* Demos section */
+.demos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+.demo-card { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; text-align:center; }
+.see-more-wrap { text-align:center; margin-top: 1rem; }
+.see-more-btn { display:inline-block; padding: 0.6rem 1rem; border-radius: 999px; border:1px solid rgba(255,255,255,0.06); background: linear-gradient(90deg, rgba(0,212,255,0.06), rgba(78,205,196,0.03)); color: var(--primary-color); text-decoration:none; }
+
+@media (max-width: 900px) { .demos-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .demos-grid { grid-template-columns: 1fr; } }
+
+/* Videos Section (reuses countries-section visual) */
+.videos-section .section-title { margin-bottom: 0.25rem; }
+.videos-section > .container > p.font-body { color: var(--primary-color); font-weight:600; margin-top:0.5rem; text-align:center; }
+.videos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.25rem; }
+.video-card { background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; }
+.video-inner { width: 100%; position: relative; padding-top: 56.25%; /* 16:9 ratio */ }
+.video-inner iframe { position: absolute; top:0; left:0; width:100%; height:100%; border:0; }
+.video-title { padding: 0.5rem 0.75rem; margin: 0; color: var(--text-primary); font-size: 0.95rem; }
+
+@media (max-width: 1100px) {
+  .videos-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .videos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .videos-grid { grid-template-columns: 1fr; }
+}
+
+/* Collapsed videos: show only first 4 */
+.videos-grid.collapsed > .video-card { display: none; }
+.videos-grid.collapsed > .video-card:nth-child(-n+4) { display: flex; }
+
+.videos-actions .see-more-btn { cursor: pointer; }
 
 /* PERFORMANCE OPTIMIZATIONS */
 /* Reduce paint complexity */
