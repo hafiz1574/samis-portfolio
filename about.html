@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Hafiz Al Sami</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&family=Rajdhani:wght@400;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation (matches main site) -->
+    <nav class="navbar" role="navigation" aria-label="Main Navigation">
+        <div class="nav-container">
+            <a href="index.html#home" class="nav-logo font-title">
+                <span class="main-text">SAM</span>
+                <span class="small-i">
+                    <span class="i-body">I</span>
+                    <span class="dot"></span>
+                </span>
+            </a>
+            <ul class="nav-menu" id="nav-menu">
+                <li><a href="index.html#home" class="nav-link font-nav">Home</a></li>
+                <li><a href="about.html" class="nav-link font-nav">About</a></li>
+                <li><a href="index.html#services" class="nav-link font-nav">Services</a></li>
+                <li><a href="index.html#portfolio" class="nav-link font-nav">Portfolio</a></li>
+                <li><a href="index.html#blender-projects" class="nav-link font-nav">3D Projects</a></li>
+                <li><a href="index.html#fiverr-gigs" class="nav-link font-nav">Fiverr Gigs</a></li>
+                <li><a href="index.html#contact" class="nav-link font-nav">Contact</a></li>
+            </ul>
+            <div class="nav-controls">
+                <button id="mode-toggle" class="mode-toggle">🌙</button>
+                <button class="hamburger" id="hamburger" aria-label="Open navigation menu" aria-controls="nav-menu" aria-expanded="false">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- About Section (moved here) -->
+        <section id="about">
+            <div class="container">
+                <h2 class="section-title font-title">About Me</h2>
+                <div class="about-content">
+                    <div class="about-photo-section">
+                        <div class="about-photo-container">
+                            <div class="photo-3d-wrapper">
+                                <div class="about-photo">
+                                    <img src="images/Sami.jpg" alt="Hafiz Al Sami - Professional Photo" class="profile-img">
+                                    <div class="photo-overlay">
+                                        <div class="photo-glow"></div>
+                                    </div>
+                                </div>
+                                <div class="photo-reflection"></div>
+                            </div>
+                            <div class="photo-stats">
+                                <div class="stats-inline">
+                                    <div class="stat-mini">
+                                        <span class="mini-text">Reliable</span>
+                                    </div>
+                                    <div class="stat-separator">•</div>
+                                    <div class="stat-mini">
+                                        <span class="mini-text">Creative</span>
+                                    </div>
+                                    <div class="stat-separator">•</div>
+                                    <div class="stat-mini">
+                                        <span class="mini-text">Expert</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-text">
+                        <p class="font-body">
+                            I'm a passionate developer with expertise in full-stack web development, mobile applications, 
+                            and digital marketing. My journey in technology spans over 3 years, during which I've 
+                            helped businesses transform their digital presence.
+                        </p>
+                        <p class="font-body">
+                            From data management to complex e-commerce solutions, I bring a unique blend of technical 
+                            expertise and business acumen to every project.
+                        </p>
+                        <div class="skills-grid">
+                            <div class="skill-category">
+                                <h4 class="font-nav">Frontend Development</h4>
+                                <div class="skill-tags">
+                                    <span class="skill-tag font-body">HTML5</span>
+                                    <span class="skill-tag font-body">CSS3</span>
+                                    <span class="skill-tag font-body">JavaScript</span>
+                                    <span class="skill-tag font-body">React</span>
+                                    <span class="skill-tag font-body">Vue.js</span>
+                                </div>
+                            </div>
+                            <div class="skill-category">
+                                <h4 class="font-nav">Backend Development</h4>
+                                <div class="skill-tags">
+                                    <span class="skill-tag font-body">Node.js</span>
+                                    <span class="skill-tag font-body">Python</span>
+                                    <span class="skill-tag font-body">PHP</span>
+                                    <span class="skill-tag font-body">MySQL</span>
+                                    <span class="skill-tag font-body">MongoDB</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <p class="footer-copy">© <span id="current-year">2025</span> Hafiz Al Sami. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

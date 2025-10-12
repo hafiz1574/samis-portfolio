@@ -1154,20 +1154,34 @@ class SectionManager {
     // Enhanced navigation with smooth scrolling support - MODIFIED FOR MODAL COMPATIBILITY
     document.querySelectorAll('.nav-menu .nav-link, .nav-logo').forEach(anchor => {
       anchor.addEventListener('click', (e) => {
-        // Check if click is specifically ON the card itself (not modal elements) - if so, ignore
+        // Let modal-card clicks be handled elsewhere
         const isModalCard = (e.target.closest('.service-card') || e.target.closest('.portfolio-item')) && 
                            !e.target.closest('.modal') && !e.target.closest('.project-modal');
-        if (isModalCard) {
-          return; // Let modal system handle this
+        if (isModalCard) return; // Let modal system handle this
+
+        const href = anchor.getAttribute('href') || '';
+
+        // Only intercept in-page hash links (e.g. "#contact").
+        // For normal links (like "about.html") allow the browser to navigate.
+        if (!href.startsWith('#')) {
+          // Close mobile menu if open (so navigation happens cleanly on small screens)
+          const hamburger = document.getElementById('hamburger');
+          const navMenu = document.getElementById('nav-menu');
+          if (hamburger && navMenu && hamburger.classList.contains('active')) {
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+          }
+          return; // allow default navigation
         }
-        
+
+        // At this point it's a hash link; intercept and perform smooth scrolling
         e.preventDefault();
-        const targetId = anchor.getAttribute('href').substring(1);
-        
+        const targetId = href.substring(1);
+
         if (targetId === 'home') {
           window.scrollTo({ 
             top: 0, 
-            behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
+            behavior: 'smooth'
           });
         } else {
           const target = document.getElementById(targetId);
@@ -1175,7 +1189,7 @@ class SectionManager {
             const targetOffset = target.offsetTop - 80; // Account for navbar
             window.scrollTo({
               top: targetOffset,
-              behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
+              behavior: 'smooth'
             });
           }
         }
@@ -1188,19 +1202,20 @@ class SectionManager {
         // Check if click is specifically ON the card itself (not modal elements) - if so, ignore
         const isModalCard = (e.target.closest('.service-card') || e.target.closest('.portfolio-item')) && 
                            !e.target.closest('.modal') && !e.target.closest('.project-modal');
-        if (isModalCard) {
-          return; // Let modal system handle this
-        }
-        
+        if (isModalCard) return; // Let modal system handle this
+
+        const href = button.getAttribute('href') || '';
+        // Only intercept hash links (in-page). Allow normal navigation for other links.
+        if (!href.startsWith('#')) return;
+
         e.preventDefault();
-        const targetId = button.getAttribute('href').substring(1);
-        
+        const targetId = href.substring(1);
         const target = document.getElementById(targetId);
         if (target) {
           const targetOffset = target.offsetTop - 80; // Account for navbar
           window.scrollTo({
             top: targetOffset,
-            behavior: 'smooth' // Changed back to 'smooth' for smooth scrolling
+            behavior: 'smooth'
           });
         }
       });
