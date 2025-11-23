@@ -3,65 +3,6 @@
   background: linear-gradient(180deg, rgba(6,6,10,0.95), rgba(12,12,16,0.98));
   color: rgba(255,255,255,0.85);
   padding: 1.25rem 1rem;
-  text-align: center;
-  border-top: 1px solid rgba(255,255,255,0.03);
-}
-.site-footer .footer-inner { max-width: 1100px; margin: 0 auto; }
-.footer-copy { margin: 0; font-size: 0.95rem; letter-spacing: 0.2px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .site-footer { transition: none !important; }
-}
-
-/* Countries Section */
-.countries-section {
-  padding: 4rem 1rem;
-  /* Make the main section container flat and match page background */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-radius: 0 !important;
-  min-height: auto !important;
-  overflow: visible !important;
-  position: static !important;
-}
-.countries-section::before { display: none !important; }
-.countries-section .section-title {
-  margin-bottom: 0.25rem;
- /* font-size: clamp(2.2rem, 4.8vw, 3.4rem);
-  font-weight: 700;
-  background: linear-gradient(90deg, #00f0ff 0%, #7af2c6 45%, #ffd36b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 6px 18px rgba(0, 240, 255, 0.06); subtle glow */
-}
-.countries-section > .container > p.font-body {
-  color: var(--primary-color);
-  font-weight: 600;
-  margin-top: 0.5rem;
-  text-align: center;
-  text-shadow: 0 6px 18px rgba(0,212,255,0.06);
-  /* Make paragraph size similar to h3 */
-  font-size: clamp(1.1rem, 2.2vw, 1.4rem); /* responsive h3-ish size */
-}
-.countries-section p { margin-bottom: 1.25rem; color: rgba(255,255,255,0.7); }
-.countries-section .icon-plane { margin-left: 0.65rem; display:inline-flex; align-items:center; transform: translateY(-3px); }
-.countries-section .icon-plane img { width:70px; height:70px; display:block; filter: drop-shadow(0 8px 18px rgba(0,120,200,0.08)); }
-.countries-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; align-items: stretch; }
-.country-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 1rem; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:140px; box-shadow: 0 6px 18px rgba(2,6,10,0.45); }
-.flag-wrap { width:100%; display:flex; align-items:center; justify-content:center; padding: .25rem 0; }
-.flag-img { max-width: 100%; height: 80px; object-fit: contain; border-radius:6px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
-.country-name { margin-top:0.75rem; font-weight:600; color: var(--text-primary); }
-
-@media (max-width: 900px) {
-  .countries-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-  .countries-grid { grid-template-columns: 1fr; }
-  .flag-img { height: 64px; }
 }
 
 /* Country card hover effect */
@@ -152,7 +93,7 @@
 @media (max-width: 900px) { .demos-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .demos-grid { grid-template-columns: 1fr; } }
 
-/* Videos Section (reuses countries-section visual) */
+.videos-section { border: none; box-shadow: none; }
 .videos-section .section-title { margin-bottom: 0.25rem; }
 .videos-section > .container > p.font-body { color: var(--primary-color); font-weight:600; margin-top:0.5rem; text-align:center; }
 .videos-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.25rem; }
@@ -1467,6 +1408,123 @@ body {
   padding: 2rem;
   overflow: hidden;
   transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease;
+}
+
+/* Announcement Marquee (continuous right → left) */
+.announcement-slider {
+  width: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-top: 1px solid rgba(255,255,255,0.03);
+  padding: 0.4rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2500;
+}
+.announcement-inner { max-width: 1100px; width: 100%; background: transparent; border: none; box-shadow: none; }
+
+/* Marquee */
+.marquee-viewport {
+  overflow: hidden;
+  width: 100%;
+}
+.marquee-track {
+  display: inline-flex;
+  gap: 3rem;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+}
+.marquee-track.animating { animation-timing-function: linear; animation-iteration-count: infinite; animation-name: marqueeMove; }
+.announce-item {
+  display: inline-block;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-weight: 600;
+  padding: 0 0.25rem;
+  font-size: 1rem;
+}
+
+@keyframes marqueeMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Pause the marquee when user hovers or focuses */
+.marquee-viewport:hover .marquee-track,
+.marquee-viewport:focus .marquee-track { animation-play-state: paused !important; }
+
+@media (max-width: 768px) {
+  .announce-item { font-size: 0.92rem; }
+  .announcement-inner { padding: 0 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none !important; }
+}
+
+/* Announcement floating over hero - not a full section */
+#announcement {
+  position: absolute; /* positioned relative to nearest positioned ancestor (we'll place it above hero) */
+  left: 50%;
+  transform: translateX(-50%);
+  top: 12vh; /* slightly below top, overlapping hero */
+  width: calc(100% - 2rem);
+  max-width: 1200px;
+  pointer-events: auto;
+  z-index: 3000;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+  border-radius: 10px;
+}
+
+/* If you prefer the announcement pinned to the viewport, use fixed positioning instead */
+/* #announcement { position: fixed; top: 12vh; } */
+
+/* Countries section restored styles */
+.countries-section {
+  padding: 3rem 1rem;
+  /* keep section background flush: remove any container border/shadow */
+  border: none;
+  box-shadow: none;
+}
+.countries-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.country-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: transform 300ms cubic-bezier(.22,.9,.3,1), box-shadow 300ms ease, border-color 300ms ease;
+}
+.country-card .flag-wrap { display: block; max-height: 84px; overflow: hidden; border-radius: 8px; }
+.country-card .flag-img { width: 100%; height: auto; display: block; }
+.country-name { font-weight: 700; color: var(--text-primary); margin-top: 0.25rem; }
+.country-details { margin: 0.5rem 0 0; }
+.country-card .guidance-btn { margin-top: auto; align-self: flex-start; }
+
+@media (max-width: 1100px) { .countries-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .countries-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .countries-grid { grid-template-columns: 1fr; } #announcement { top: 6vh; } }
+
+/* Plane icon sizing inline with title */
+.section-title .icon-plane {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.6rem;
+}
+.section-title .icon-plane img {
+  width: 20px;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .hero-section.scroll-hide {

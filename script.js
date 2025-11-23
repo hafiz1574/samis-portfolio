@@ -143,6 +143,9 @@ window.projectData = {
       initModalSystemLate();
     }, 1000);
 
+    // Initialize announcement slider under hero
+    initAnnouncementSlider();
+
   // country details are now provided directly in HTML
     
     // NOTE: Removed automatic scroll to top - was causing modal scroll issues
@@ -2619,3 +2622,95 @@ function startFaviconAnimation() {
 
 // Start animation
 startFaviconAnimation();
+
+/* Announcement Slider */
+function initAnnouncementSlider() {
+  const slider = document.getElementById('announcement');
+  if (!slider) return;
+
+  const viewport = slider.querySelector('.marquee-viewport');
+  const track = slider.querySelector('.marquee-track');
+  if (!viewport || !track) return;
+
+  // If the markup inside the track was escaped and displayed as literal HTML (e.g. "&lt;span...&gt;" or raw '<span>'),
+  // attempt to repair it by taking the textual content and setting it back as HTML. This helps when files are
+  // served or edited in a way that accidentally escapes HTML.
+  try {
+    const inner = track.innerHTML || '';
+    const text = track.textContent || '';
+    const looksEscaped = inner.includes('&lt;') || inner.includes('&gt;') || (/^\s*</).test(text.trim());
+    if (looksEscaped && text.trim().length) {
+      console.info('Marquee: detected escaped HTML inside marquee-track; attempting to decode.');
+      track.innerHTML = text;
+    }
+  } catch (err) {
+    // continue silently if any DOM exception occurs
+    console.warn('Marquee: failed to auto-decode escaped HTML', err);
+  }
+
+  // Defensive fallback: if parsing didn't produce any announce-item elements, inject a safe default list
+  if (!track.querySelector('.announce-item')) {
+    console.warn('Marquee: no .announce-item found after decode — injecting fallback announcements.');
+    const fallback = [
+      '🎉 Launching new portfolio updates — check out the Latest Videos section!',
+      '🚀 Now offering 1-on-1 mentoring sessions — limited slots available.',
+      '📢 Free consultation for first-time clients — book via the contact form.',
+      '🌍 Working with students across Lithuania, Spain, Bangladesh, and the USA.'
+    ];
+    // create duplicated sequence for seamless loop
+    track.innerHTML = fallback.concat(fallback).map(s => `<span class="announce-item">${s}</span>`).join('');
+  }
+
+  // Remove any previous animation classes
+  track.classList.remove('animating');
+
+  let animationDuration = 20; // fallback seconds
+
+  function computeAndStart() {
+    // Measure total width of the track content (we duplicated content for seamless loop)
+    const contentWidth = track.scrollWidth / 2; // original content (half of duplicated)
+
+    // Base speed: 100px per second (adjustable). Compute duration so whole content scrolls by its width.
+    const speed = 120; // px per second
+    const duration = Math.max(8, Math.ceil(contentWidth / speed));
+    animationDuration = duration;
+
+    // Set CSS animation duration (we animate translateX -50% which equals one full content width)
+    track.style.animationDuration = `${animationDuration}s`;
+    // Ensure smooth linear animation
+    track.classList.add('animating');
+  }
+
+  // Pause/resume helpers
+  function pause() { track.style.animationPlayState = 'paused'; }
+  function resume() { track.style.animationPlayState = 'running'; }
+
+  // Pause on hover/focus
+  viewport.addEventListener('mouseenter', pause);
+  viewport.addEventListener('mouseleave', resume);
+  viewport.addEventListener('focusin', pause);
+  viewport.addEventListener('focusout', resume);
+
+  // Recompute on resize
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => {
+      // small timeout to let layout stabilize
+      setTimeout(() => computeAndStart(), 50);
+    });
+    ro.observe(track);
+    ro.observe(viewport);
+  } else {
+    window.addEventListener('resize', () => { setTimeout(computeAndStart, 100); });
+  }
+
+  // Reduced motion respect
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) {
+    track.classList.remove('animating');
+    track.style.animation = 'none';
+    return;
+  }
+
+  // Start
+  computeAndStart();
+}
